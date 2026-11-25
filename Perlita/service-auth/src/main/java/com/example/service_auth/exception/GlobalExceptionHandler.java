@@ -14,12 +14,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Solicitud inv\u00e1lida",
-                ex.getMessage()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return build(HttpStatus.BAD_REQUEST, "Solicitud inválida", ex.getMessage());
+    }
+
+    @ExceptionHandler(RolInvalidoException.class)
+    public ResponseEntity<ErrorResponse> handleRolInvalido(RolInvalidoException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Solicitud inválida", ex.getMessage());
+    }
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    public ResponseEntity<ErrorResponse> handleCredencialesInvalidas(CredencialesInvalidasException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "No autorizado", ex.getMessage());
+    }
+
+    @ExceptionHandler(UsuarioDuplicadoException.class)
+    public ResponseEntity<ErrorResponse> handleUsuarioDuplicado(UsuarioDuplicadoException ex) {
+        return build(HttpStatus.CONFLICT, "Conflicto", ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -30,35 +40,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errores);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
-        String mensaje = ex.getMessage();
-        HttpStatus status;
-
-        if (mensaje != null && (
-                mensaje.contains("Credenciales inv\u00e1lidas") ||
-                mensaje.contains("no existe") ||
-                mensaje.contains("ya existe"))) {
-            status = HttpStatus.BAD_REQUEST;
-        } else {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-
-        ErrorResponse error = new ErrorResponse(
-                status.value(),
-                status.getReasonPhrase(),
-                mensaje != null ? mensaje : "Error interno del servidor"
-        );
-        return ResponseEntity.status(status).body(error);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        return build(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "Error interno del servidor",
                 ex.getMessage() != null ? ex.getMessage() : "Error interno del servidor"
         );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String mensaje) {
+        ErrorResponse response = new ErrorResponse(status.value(), error, mensaje);
+        return ResponseEntity.status(status).body(response);
     }
 }

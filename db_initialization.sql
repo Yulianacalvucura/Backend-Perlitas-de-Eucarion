@@ -11,7 +11,6 @@
 -- ------------------------------------------------------------
 INSERT INTO roles (nombre_rol) VALUES ('ADMIN');
 INSERT INTO roles (nombre_rol) VALUES ('VENDEDOR');
-INSERT INTO roles (nombre_rol) VALUES ('CLIENTE');
 
 -- ------------------------------------------------------------
 -- 2. materiales (db_materials)

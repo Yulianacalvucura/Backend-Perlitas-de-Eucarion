@@ -2,11 +2,13 @@ package com.example.service_auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity 
@@ -18,7 +20,8 @@ public class SecurityConfig
         return http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/registrar").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/auth/v3/api-docs/",
                     "/api/v1/auth/v3/api-docs/**",
@@ -27,7 +30,9 @@ public class SecurityConfig
                     "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated()
-            ).build();
+            )
+            .addFilterBefore(new RequestHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .build();
     }
 
     @Bean

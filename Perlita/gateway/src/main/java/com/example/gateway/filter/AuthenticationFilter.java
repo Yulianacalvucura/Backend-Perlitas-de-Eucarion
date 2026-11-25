@@ -27,9 +27,12 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/auth")
-            || path.startsWith("/swagger-ui")
-            || path.contains("/v3/api-docs");
+
+        if (path.startsWith("/swagger-ui") || path.contains("/v3/api-docs")) {
+            return true;
+        }
+
+        return path.equals("/auth/login") && "POST".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
@@ -57,11 +60,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
             String path = request.getRequestURI();
             String method = request.getMethod();
-
-            if (roles.contains("CLIENTE") && !method.equals("GET")) {
-                onError(response, "Lo sentimos, tu cuenta de CLIENTE no tiene permisos para realizar esta acción.", HttpServletResponse.SC_FORBIDDEN);
-                return;
-            }
 
             if (roles.contains("VENDEDOR") && method.equals("DELETE")) {
                 onError(response, "Lo sentimos, tu cuenta de VENDEDOR no tiene permisos para eliminar registros.", HttpServletResponse.SC_FORBIDDEN);

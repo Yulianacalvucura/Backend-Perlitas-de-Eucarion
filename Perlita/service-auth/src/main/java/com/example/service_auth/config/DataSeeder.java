@@ -22,8 +22,8 @@ public class DataSeeder {
 
             Rol admin = rolRepository.save(new Rol(null, "ADMIN"));
             Rol vendedor = rolRepository.save(new Rol(null, "VENDEDOR"));
-            Rol cliente = rolRepository.save(new Rol(null, "CLIENTE"));
 
+            // cambiar en producción
             Usuario adminUser = new Usuario();
             adminUser.setNombreUsuario("admin");
             adminUser.setContrasena(passwordEncoder.encode("admin123"));
