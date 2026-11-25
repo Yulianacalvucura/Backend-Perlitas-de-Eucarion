@@ -25,26 +25,26 @@ public class WebClientConfig {
 
     @Bean("productosWebClient")
     public WebClient productosWebClient() {
-        return WebClient.builder().baseUrl(productosUrl).build();
+        return WebClient.builder().baseUrl(productosUrl).filter(WebClientAuthPropagationFilter.propagateAuthHeaders()).build();
     }
 
     @Bean("materialesWebClient")
     public WebClient materialesWebClient() {
-        return WebClient.builder().baseUrl(materialesUrl).build();
+        return WebClient.builder().baseUrl(materialesUrl).filter(WebClientAuthPropagationFilter.propagateAuthHeaders()).build();
     }
 
     @Bean("ventasWebClient")
     public WebClient ventasWebClient() {
-        return WebClient.builder().baseUrl(ventasUrl).build();
+        return WebClient.builder().baseUrl(ventasUrl).filter(WebClientAuthPropagationFilter.propagateAuthHeaders()).build();
     }
 
     @Bean("pedidosWebClient")
     public WebClient pedidosWebClient() {
-        return WebClient.builder().baseUrl(pedidosUrl).build();
+        return WebClient.builder().baseUrl(pedidosUrl).filter(WebClientAuthPropagationFilter.propagateAuthHeaders()).build();
     }
 
     @Bean("gastosWebClient")
     public WebClient gastosWebClient() {
-        return WebClient.builder().baseUrl(gastosUrl).build();
+        return WebClient.builder().baseUrl(gastosUrl).filter(WebClientAuthPropagationFilter.propagateAuthHeaders()).build();
     }
 }

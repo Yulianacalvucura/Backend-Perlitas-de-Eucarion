@@ -433,6 +433,24 @@ Reglas generales:
 
 ---
 
+## Variables de entorno (seguridad)
+
+Los secretos y credenciales se externalizan con variables de entorno. Los valores por defecto son **solo para desarrollo**; en cualquier entorno compartido/producci?n deben definirse expl?citamente.
+
+| Variable | Uso | Valor por defecto (dev) |
+|---|---|---|
+| `JWT_SECRET` | Secreto HMAC para firmar/validar JWT (gateway y service-auth) | secreto de desarrollo incluido en config |
+| `DB_USER` | Usuario de base de datos MySQL | `root` |
+| `DB_PASSWORD` | Contrase?a de base de datos MySQL | vac?o |
+
+Aplica en todos los `application.properties`/`application.yml` de los microservicios.
+
+## Comunicaci?n entre microservicios
+
+- Las llamadas WebClient inter-servicio propagan `X-User-Username` y `X-User-Roles` desde la petici?n entrante (`RequestContextHolder`) mediante `ExchangeFilterFunction`.
+- Se distingue `404` (recurso no existe) de errores `5xx`/red: estos ?ltimos lanzan `ServicioNoDisponibleException` y responden `503 Servicio no disponible`.
+- Un microservicio llamado directamente, sin pasar por gateway y sin headers de identidad, responde `401 Unauthorized`.
+
 ## Reglas de negocio
 
 - Los pedidos solo pueden avanzar en orden: `pendiente` → `en_fabricacion` → `listo_para_entrega` → `entregado`. No se puede retroceder ni saltar estados.

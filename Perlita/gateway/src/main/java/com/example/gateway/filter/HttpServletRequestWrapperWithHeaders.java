@@ -5,12 +5,14 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class HttpServletRequestWrapperWithHeaders extends HttpServletRequestWrapper {
 
-    private final Map<String, String> customHeaders = new HashMap<>();
+    private final Map<String, String> customHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     public HttpServletRequestWrapperWithHeaders(HttpServletRequest request) {
         super(request);
@@ -22,25 +24,30 @@ public class HttpServletRequestWrapperWithHeaders extends HttpServletRequestWrap
 
     @Override
     public String getHeader(String name) {
-        String headerValue = customHeaders.get(name);
-        if (headerValue != null) {
-            return headerValue;
+        if (customHeaders.containsKey(name)) {
+            return customHeaders.get(name);
         }
         return super.getHeader(name);
     }
 
     @Override
     public Enumeration<String> getHeaderNames() {
-        java.util.List<String> names = Collections.list(super.getHeaderNames());
+        Set<String> names = new LinkedHashSet<>();
+        Enumeration<String> original = super.getHeaderNames();
+        while (original.hasMoreElements()) {
+            String name = original.nextElement();
+            if (!customHeaders.containsKey(name)) {
+                names.add(name);
+            }
+        }
         names.addAll(customHeaders.keySet());
         return Collections.enumeration(names);
     }
 
     @Override
     public Enumeration<String> getHeaders(String name) {
-        String headerValue = customHeaders.get(name);
-        if (headerValue != null) {
-            return Collections.enumeration(Collections.singletonList(headerValue));
+        if (customHeaders.containsKey(name)) {
+            return Collections.enumeration(Collections.singletonList(customHeaders.get(name)));
         }
         return super.getHeaders(name);
     }

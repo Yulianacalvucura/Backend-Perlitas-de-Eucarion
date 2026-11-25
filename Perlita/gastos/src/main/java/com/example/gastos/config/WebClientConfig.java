@@ -13,6 +13,9 @@ public class WebClientConfig {
 
     @Bean("proveedoresWebClient")
     public WebClient proveedoresWebClient() {
-        return WebClient.builder().baseUrl(proveedoresUrl).build();
+        return WebClient.builder()
+                .baseUrl(proveedoresUrl)
+                .filter(WebClientAuthPropagationFilter.propagateAuthHeaders())
+                .build();
     }
 }

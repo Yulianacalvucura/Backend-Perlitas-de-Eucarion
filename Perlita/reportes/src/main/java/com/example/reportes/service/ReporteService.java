@@ -1,13 +1,17 @@
 package com.example.reportes.service;
 
+import com.example.reportes.exception.ServicioNoDisponibleException;
 import com.example.reportes.model.Reporte;
 import com.example.reportes.repository.ReporteRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,14 +63,18 @@ public class ReporteService {
                     .uri("/ventas")
                     .retrieve()
                     .bodyToMono(List.class)
-                    .onErrorResume(e -> Mono.empty())
+                    .onErrorResume(WebClientResponseException.NotFound.class, e -> Mono.just(Collections.emptyList()))
+                    .onErrorMap(WebClientRequestException.class, e -> new ServicioNoDisponibleException("Servicio de ventas no disponible", e))
+                    .onErrorMap(WebClientResponseException.class, e -> new ServicioNoDisponibleException("Servicio de ventas no disponible", e))
                     .block();
 
             List<Map<String, Object>> productos = productosWebClient.get()
                     .uri("/productos")
                     .retrieve()
                     .bodyToMono(List.class)
-                    .onErrorResume(e -> Mono.empty())
+                    .onErrorResume(WebClientResponseException.NotFound.class, e -> Mono.just(Collections.emptyList()))
+                    .onErrorMap(WebClientRequestException.class, e -> new ServicioNoDisponibleException("Servicio de productos no disponible", e))
+                    .onErrorMap(WebClientResponseException.class, e -> new ServicioNoDisponibleException("Servicio de productos no disponible", e))
                     .block();
 
             Reporte reporte = new Reporte();
@@ -77,6 +85,8 @@ public class ReporteService {
                     + ",\"productos\":" + (productos != null ? productos.size() : 0) + "}");
 
             return reporteRepository.save(reporte);
+        } catch (ServicioNoDisponibleException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al generar reporte de ventas: " + e.getMessage());
         }
@@ -89,7 +99,9 @@ public class ReporteService {
                     .uri("/materiales/stock-bajo")
                     .retrieve()
                     .bodyToMono(List.class)
-                    .onErrorResume(e -> Mono.empty())
+                    .onErrorResume(WebClientResponseException.NotFound.class, e -> Mono.just(Collections.emptyList()))
+                    .onErrorMap(WebClientRequestException.class, e -> new ServicioNoDisponibleException("Servicio de materiales no disponible", e))
+                    .onErrorMap(WebClientResponseException.class, e -> new ServicioNoDisponibleException("Servicio de materiales no disponible", e))
                     .block();
 
             Reporte reporte = new Reporte();
@@ -112,7 +124,9 @@ public class ReporteService {
                     .uri("/pedidos")
                     .retrieve()
                     .bodyToMono(List.class)
-                    .onErrorResume(e -> Mono.empty())
+                    .onErrorResume(WebClientResponseException.NotFound.class, e -> Mono.just(Collections.emptyList()))
+                    .onErrorMap(WebClientRequestException.class, e -> new ServicioNoDisponibleException("Servicio de pedidos no disponible", e))
+                    .onErrorMap(WebClientResponseException.class, e -> new ServicioNoDisponibleException("Servicio de pedidos no disponible", e))
                     .block();
 
             Reporte reporte = new Reporte();
@@ -122,6 +136,8 @@ public class ReporteService {
             reporte.setResultadoJson("{\"totalPedidos\":" + (pedidos != null ? pedidos.size() : 0) + "}");
 
             return reporteRepository.save(reporte);
+        } catch (ServicioNoDisponibleException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al generar reporte de pedidos: " + e.getMessage());
         }
