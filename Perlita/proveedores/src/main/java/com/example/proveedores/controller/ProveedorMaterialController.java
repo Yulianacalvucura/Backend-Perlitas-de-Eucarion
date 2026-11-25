@@ -24,19 +24,36 @@ public class ProveedorMaterialController {
     private ProveedorMaterialService service;
 
     @Operation(summary = "Listar materiales de un proveedor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Materiales del proveedor obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar proveedores"),
+            @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
+    })
     @GetMapping("/proveedor/{proveedorId}")
     public List<ProveedorMaterial> listarPorProveedor(@PathVariable Long proveedorId) {
         return service.listarPorProveedor(proveedorId);
     }
 
     @Operation(summary = "Listar proveedores de un material")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Proveedores del material obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar proveedores"),
+            @ApiResponse(responseCode = "404", description = "Material no encontrado")
+    })
     @GetMapping("/material/{materialId}")
     public List<ProveedorMaterial> listarPorMaterial(@PathVariable Long materialId) {
         return service.listarPorMaterial(materialId);
     }
 
     @Operation(summary = "Asociar material a un proveedor")
-    @ApiResponse(responseCode = "201", description = "Material asociado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Material asociado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<ProveedorMaterial> crear(@Valid @RequestBody ProveedorMaterial proveedorMaterial) {
         return new ResponseEntity<>(service.guardar(proveedorMaterial), HttpStatus.CREATED);
@@ -44,6 +61,9 @@ public class ProveedorMaterialController {
 
     @Operation(summary = "Actualizar precio de material de proveedor")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Precio actualizado"),
             @ApiResponse(responseCode = "404", description = "Relación no encontrada")
     })
@@ -59,6 +79,8 @@ public class ProveedorMaterialController {
 
     @Operation(summary = "Eliminar material de proveedor")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Relación eliminada"),
             @ApiResponse(responseCode = "404", description = "Relación no encontrada")
     })

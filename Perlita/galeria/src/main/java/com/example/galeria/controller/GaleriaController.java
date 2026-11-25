@@ -25,6 +25,11 @@ public class GaleriaController {
     private GaleriaService galeriaService;
 
     @Operation(summary = "Listar todas las imágenes de la galería")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de imágenes obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar la galería")
+    })
     @GetMapping
     public List<Galeria> listarTodos() {
         return galeriaService.listarTodos();
@@ -32,6 +37,8 @@ public class GaleriaController {
 
     @Operation(summary = "Buscar una imagen de galería por su ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Imagen encontrada"),
             @ApiResponse(responseCode = "404", description = "Imagen no encontrada")
     })
@@ -43,13 +50,24 @@ public class GaleriaController {
     }
 
     @Operation(summary = "Buscar imágenes por producto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Imágenes del producto obtenidas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar la galería"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @GetMapping("/producto/{productoId}")
     public List<Galeria> buscarPorProducto(@PathVariable Long productoId) {
         return galeriaService.buscarPorProducto(productoId);
     }
 
     @Operation(summary = "Agregar una nueva imagen a la galería")
-    @ApiResponse(responseCode = "201", description = "Imagen agregada exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Imagen agregada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Galeria> guardar(@Valid @RequestBody Galeria galeria) {
         return new ResponseEntity<>(galeriaService.guardar(galeria), HttpStatus.CREATED);
@@ -57,6 +75,8 @@ public class GaleriaController {
 
     @Operation(summary = "Eliminar una imagen de la galería")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Imagen eliminada"),
             @ApiResponse(responseCode = "404", description = "Imagen no encontrada")
     })
