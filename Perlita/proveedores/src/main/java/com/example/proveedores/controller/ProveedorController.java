@@ -15,7 +15,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/proveedores")
+@RequestMapping("/api/v1/proveedores")
 @Tag(name = "Proveedores", description = "Gestión del directorio de proveedores")
 public class ProveedorController {
 

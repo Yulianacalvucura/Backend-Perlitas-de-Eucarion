@@ -17,7 +17,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/galeria")
+@RequestMapping("/api/v1/galeria")
 @Tag(name = "Galería", description = "Gestión del portafolio visual de productos")
 public class GaleriaController {
 

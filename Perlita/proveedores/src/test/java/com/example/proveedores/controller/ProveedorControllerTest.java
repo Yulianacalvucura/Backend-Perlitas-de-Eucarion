@@ -35,7 +35,7 @@ class ProveedorControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Proveedor()));
 
-        mockMvc.perform(get("/proveedores"))
+        mockMvc.perform(get("/api/v1/proveedores"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -46,7 +46,7 @@ class ProveedorControllerTest {
         p.setActivo(1);
         when(service.listarActivos()).thenReturn(List.of(p));
 
-        mockMvc.perform(get("/proveedores/activos"))
+        mockMvc.perform(get("/api/v1/proveedores/activos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].activo").value(1));
     }
@@ -58,7 +58,7 @@ class ProveedorControllerTest {
         p.setNombre("Test");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(p));
 
-        mockMvc.perform(get("/proveedores/1"))
+        mockMvc.perform(get("/api/v1/proveedores/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nombre").value("Test"));
@@ -68,7 +68,7 @@ class ProveedorControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/proveedores/99"))
+        mockMvc.perform(get("/api/v1/proveedores/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -82,7 +82,7 @@ class ProveedorControllerTest {
         saved.setNombre("Nuevo Proveedor");
         when(service.guardar(any(Proveedor.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/proveedores")
+        mockMvc.perform(post("/api/v1/proveedores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -98,7 +98,7 @@ class ProveedorControllerTest {
         update.setNombre("Actualizado");
         when(service.guardar(any(Proveedor.class))).thenReturn(update);
 
-        mockMvc.perform(put("/proveedores/1")
+        mockMvc.perform(put("/api/v1/proveedores/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -109,7 +109,7 @@ class ProveedorControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Proveedor()));
 
-        mockMvc.perform(delete("/proveedores/1"))
+        mockMvc.perform(delete("/api/v1/proveedores/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);
@@ -127,7 +127,7 @@ class ProveedorControllerTest {
         desactivado.setActivo(0);
         when(service.guardar(any(Proveedor.class))).thenReturn(desactivado);
 
-        mockMvc.perform(patch("/proveedores/1/desactivar"))
+        mockMvc.perform(patch("/api/v1/proveedores/1/desactivar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activo").value(0));
     }
@@ -144,7 +144,7 @@ class ProveedorControllerTest {
         activado.setActivo(1);
         when(service.guardar(any(Proveedor.class))).thenReturn(activado);
 
-        mockMvc.perform(patch("/proveedores/1/activar"))
+        mockMvc.perform(patch("/api/v1/proveedores/1/activar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activo").value(1));
     }

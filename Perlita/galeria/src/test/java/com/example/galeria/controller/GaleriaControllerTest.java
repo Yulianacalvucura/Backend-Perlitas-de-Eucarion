@@ -36,7 +36,7 @@ class GaleriaControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Galeria()));
 
-        mockMvc.perform(get("/galeria"))
+        mockMvc.perform(get("/api/v1/galeria"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -48,7 +48,7 @@ class GaleriaControllerTest {
         g.setUrlImagen("http://img.jpg");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(g));
 
-        mockMvc.perform(get("/galeria/1"))
+        mockMvc.perform(get("/api/v1/galeria/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
@@ -57,7 +57,7 @@ class GaleriaControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/galeria/99"))
+        mockMvc.perform(get("/api/v1/galeria/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -65,7 +65,7 @@ class GaleriaControllerTest {
     void buscarPorProducto_shouldReturn200() throws Exception {
         when(service.buscarPorProducto(1L)).thenReturn(List.of(new Galeria()));
 
-        mockMvc.perform(get("/galeria/producto/1"))
+        mockMvc.perform(get("/api/v1/galeria/producto/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -83,7 +83,7 @@ class GaleriaControllerTest {
         saved.setProductoId(1L);
         when(service.guardar(any(Galeria.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/galeria")
+        mockMvc.perform(post("/api/v1/galeria")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())

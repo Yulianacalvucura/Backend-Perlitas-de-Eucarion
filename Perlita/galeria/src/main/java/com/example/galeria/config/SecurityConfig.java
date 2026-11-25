@@ -17,9 +17,9 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/galeria/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/galeria/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/galeria/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/galeria/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/v1/galeria/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/galeria/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/galeria/v3/api-docs/",
                     "/api/v1/galeria/v3/api-docs/**",
