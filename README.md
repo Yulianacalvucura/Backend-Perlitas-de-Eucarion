@@ -56,15 +56,15 @@ git clone https://github.com/lugrossolli-ux/perlitas_de_eucarion.git
 ### 3. Ejecutar cada microservicio (orden recomendado)
 ```bash
 cd Perlita/service-auth && ./mvnw spring-boot:run
-cd Perlita/materiales && ./mvnw spring-boot:run
-cd Perlita/productos && ./mvnw spring-boot:run
-cd Perlita/ventas && ./mvnw spring-boot:run
-cd Perlita/pedidos && ./mvnw spring-boot:run
+cd Perlita/api/v1/materiales && ./mvnw spring-boot:run
+cd Perlita/api/v1/productos && ./mvnw spring-boot:run
+cd Perlita/api/v1/ventas && ./mvnw spring-boot:run
+cd Perlita/api/v1/pedidos && ./mvnw spring-boot:run
 cd Perlita/categories && ./mvnw spring-boot:run
-cd Perlita/proveedores && ./mvnw spring-boot:run
-cd Perlita/reportes && ./mvnw spring-boot:run
-cd Perlita/galeria && ./mvnw spring-boot:run
-cd Perlita/gastos && ./mvnw spring-boot:run
+cd Perlita/api/v1/proveedores && ./mvnw spring-boot:run
+cd Perlita/api/v1/reportes && ./mvnw spring-boot:run
+cd Perlita/api/v1/galeria && ./mvnw spring-boot:run
+cd Perlita/api/v1/gastos && ./mvnw spring-boot:run
 cd Perlita/service_calendario && ./mvnw spring-boot:run
 cd Perlita/gateway && ./mvnw spring-boot:run
 ```
@@ -73,11 +73,11 @@ Las bases de datos se crean automáticamente al iniciar cada microservicio.
 
 ### 4. Autenticación
 
-Antes de consumir los endpoints, obtenga un token JWT con `POST /auth/login`. El registro de usuarios (`POST /auth/registrar`) requiere un token de ADMIN y solo acepta los roles `ADMIN` y `VENDEDOR`.
+Antes de consumir los endpoints, obtenga un token JWT con `POST /api/v1/auth/login`. El registro de usuarios (`POST /api/v1/auth/registrar`) requiere un token de ADMIN y solo acepta los roles `ADMIN` y `VENDEDOR`.
 
 ```bash
 # Registrar usuario (requiere Authorization: Bearer <token de ADMIN>)
-POST http://localhost:9090/auth/registrar
+POST http://localhost:9090/api/v1/auth/registrar
 {
   "nombreUsuario": "admin",
   "contrasena": "admin123",
@@ -86,7 +86,7 @@ POST http://localhost:9090/auth/registrar
 }
 
 # Iniciar sesión
-POST http://localhost:9090/auth/login
+POST http://localhost:9090/api/v1/auth/login
 {
   "nombreUsuario": "admin",
   "contrasena": "admin123"
@@ -117,7 +117,7 @@ Internamente, cada microservicio expone su JSON de OpenAPI en una ruta propia, q
 | reportes | /api/v1/reportes/v3/api-docs |
 | galeria | /api/v1/galeria/v3/api-docs |
 | gastos | /api/v1/gastos/v3/api-docs |
-| service_calendario | /api/v1/calendario/v3/api-docs |
+| service_calendario | /api/v1/produccion/v3/api-docs |
 
 ---
 
@@ -125,147 +125,147 @@ Internamente, cada microservicio expone su JSON de OpenAPI en una ruta propia, q
 
 Todos los endpoints pueden consumirse directamente por su puerto o a través del Gateway en `http://localhost:9090`.
 
-### Autenticación `http://localhost:9090/auth`
+### Autenticación `http://localhost:9090/api/v1/auth`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| POST | /auth/registrar | Registra un nuevo usuario |
-| POST | /auth/login | Inicia sesión y devuelve un token JWT |
+| POST | /api/v1/auth/registrar | Registra un nuevo usuario |
+| POST | /api/v1/auth/login | Inicia sesión y devuelve un token JWT |
 
-### Materiales `http://localhost:9090/materiales`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | /materiales | Lista todos los materiales |
-| GET | /materiales/{id} | Busca material por ID |
-| GET | /materiales/stock-bajo | Lista materiales con stock bajo |
-| POST | /materiales | Crea un material |
-| PUT | /materiales/{id} | Actualiza un material |
-| DELETE | /materiales/{id} | Elimina un material |
-
-### Productos `http://localhost:9090/productos`
+### Materiales `http://localhost:9090/api/v1/materiales`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /productos | Lista todos los productos |
-| GET | /productos/activos | Lista productos activos |
-| GET | /productos/{id} | Busca producto por ID |
-| GET | /productos/{id}/materiales | Ver materiales del producto |
-| POST | /productos | Crea un producto |
-| POST | /productos/{id}/materiales | Agrega material al producto |
-| PUT | /productos/{id} | Actualiza un producto |
-| DELETE | /productos/{id} | Elimina un producto |
+| GET | /api/v1/materiales | Lista todos los materiales |
+| GET | /api/v1/materiales/{id} | Busca material por ID |
+| GET | /api/v1/materiales/stock-bajo | Lista materiales con stock bajo |
+| POST | /api/v1/materiales | Crea un material |
+| PUT | /api/v1/materiales/{id} | Actualiza un material |
+| DELETE | /api/v1/materiales/{id} | Elimina un material |
 
-### Ventas `http://localhost:9090/ventas`
+### Productos `http://localhost:9090/api/v1/productos`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /ventas | Lista todas las ventas |
-| GET | /ventas/{id} | Busca venta por ID |
-| GET | /ventas/cliente/{clienteId} | Ventas por cliente |
-| GET | /ventas/resumen/metodo-pago | Resumen por método de pago |
-| POST | /ventas | Crea una venta |
+| GET | /api/v1/productos | Lista todos los productos |
+| GET | /api/v1/productos/activos | Lista productos activos |
+| GET | /api/v1/productos/{id} | Busca producto por ID |
+| GET | /api/v1/productos/{id}/api/v1/materiales | Ver materiales del producto |
+| POST | /api/v1/productos | Crea un producto |
+| POST | /api/v1/productos/{id}/api/v1/materiales | Agrega material al producto |
+| PUT | /api/v1/productos/{id} | Actualiza un producto |
+| DELETE | /api/v1/productos/{id} | Elimina un producto |
 
-### Pedidos `http://localhost:9090/pedidos`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | /pedidos | Lista todos los pedidos |
-| GET | /pedidos/{id} | Busca pedido por ID |
-| GET | /pedidos/estado/{estado} | Pedidos por estado |
-| GET | /pedidos/cliente/{clienteId} | Pedidos por cliente |
-| POST | /pedidos | Crea un pedido |
-| PUT | /pedidos/{id} | Actualiza un pedido |
-| DELETE | /pedidos/{id} | Elimina un pedido |
-| PATCH | /pedidos/{id}/estado?nuevoEstado=... | Cambia estado del pedido |
-
-### Pedido-Materiales `http://localhost:9090/pedido-materiales`
+### Ventas `http://localhost:9090/api/v1/ventas`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /pedido-materiales/pedido/{pedidoId} | Materiales reservados de un pedido |
-| POST | /pedido-materiales | Reserva un material para un pedido |
-| DELETE | /pedido-materiales/{id} | Elimina una reserva |
+| GET | /api/v1/ventas | Lista todas las ventas |
+| GET | /api/v1/ventas/{id} | Busca venta por ID |
+| GET | /api/v1/ventas/cliente/{clienteId} | Ventas por cliente |
+| GET | /api/v1/ventas/resumen/metodo-pago | Resumen por método de pago |
+| POST | /api/v1/ventas | Crea una venta |
 
-### Categorías `http://localhost:9090/categorias`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | /categorias | Lista todas las categorías |
-| GET | /categorias/activas | Lista categorías activas |
-| GET | /categorias/{id} | Busca categoría por ID |
-| GET | /categorias/obtenerProducto/{id} | Productos de una categoría |
-| POST | /categorias | Crea una categoría |
-| PUT | /categorias/{id} | Actualiza una categoría |
-| DELETE | /categorias/{id} | Elimina una categoría |
-| PATCH | /categorias/reasignar | Reasigna productos entre categorías |
-
-### Proveedores `http://localhost:9090/proveedores`
+### Pedidos `http://localhost:9090/api/v1/pedidos`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /proveedores | Lista todos los proveedores |
-| GET | /proveedores/activos | Lista proveedores activos |
-| GET | /proveedores/{id} | Busca proveedor por ID |
-| POST | /proveedores | Crea un proveedor |
-| PUT | /proveedores/{id} | Actualiza un proveedor |
-| DELETE | /proveedores/{id} | Elimina un proveedor |
-| PATCH | /proveedores/{id}/desactivar | Desactiva un proveedor |
-| PATCH | /proveedores/{id}/activar | Activa un proveedor |
+| GET | /api/v1/pedidos | Lista todos los pedidos |
+| GET | /api/v1/pedidos/{id} | Busca pedido por ID |
+| GET | /api/v1/pedidos/estado/{estado} | Pedidos por estado |
+| GET | /api/v1/pedidos/cliente/{clienteId} | Pedidos por cliente |
+| POST | /api/v1/pedidos | Crea un pedido |
+| PUT | /api/v1/pedidos/{id} | Actualiza un pedido |
+| DELETE | /api/v1/pedidos/{id} | Elimina un pedido |
+| PATCH | /api/v1/pedidos/{id}/estado?nuevoEstado=... | Cambia estado del pedido |
 
-### Proveedor-Materiales `http://localhost:9090/proveedor-materiales`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | /proveedor-materiales/proveedor/{proveedorId} | Materiales de un proveedor |
-| GET | /proveedor-materiales/material/{materialId} | Proveedores de un material |
-| POST | /proveedor-materiales | Crea relación proveedor-material |
-| PUT | /proveedor-materiales/{id} | Actualiza relación |
-| DELETE | /proveedor-materiales/{id} | Elimina relación |
-
-### Reportes `http://localhost:9090/reportes`
+### Pedido-Materiales `http://localhost:9090/api/v1/pedido-materiales`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /reportes | Lista todos los reportes generados |
-| GET | /reportes/{id} | Busca reporte por ID |
-| POST | /reportes | Crea un reporte manualmente |
-| DELETE | /reportes/{id} | Elimina un reporte |
-| GET | /reportes/generar/ventas?desde=...&hasta=... | Genera reporte de ventas por período |
-| GET | /reportes/generar/stock-critico | Genera reporte de stock crítico |
-| GET | /reportes/generar/pedidos | Genera reporte de estado de pedidos |
+| GET | /api/v1/pedido-materiales/pedido/{pedidoId} | Materiales reservados de un pedido |
+| POST | /api/v1/pedido-materiales | Reserva un material para un pedido |
+| DELETE | /api/v1/pedido-materiales/{id} | Elimina una reserva |
 
-### Galería `http://localhost:9090/galeria`
+### Categorías `http://localhost:9090/api/v1/categorias`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /galeria | Lista todas las imágenes |
-| GET | /galeria/{id} | Busca imagen por ID |
-| GET | /galeria/producto/{productoId} | Imágenes de un producto |
-| POST | /galeria | Sube una imagen |
-| DELETE | /galeria/{id} | Elimina una imagen |
+| GET | /api/v1/categorias | Lista todas las categorías |
+| GET | /api/v1/categorias/activas | Lista categorías activas |
+| GET | /api/v1/categorias/{id} | Busca categoría por ID |
+| GET | /api/v1/categorias/obtenerProducto/{id} | Productos de una categoría |
+| POST | /api/v1/categorias | Crea una categoría |
+| PUT | /api/v1/categorias/{id} | Actualiza una categoría |
+| DELETE | /api/v1/categorias/{id} | Elimina una categoría |
+| PATCH | /api/v1/categorias/reasignar | Reasigna productos entre categorías |
 
-### Gastos `http://localhost:9090/gastos`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | /gastos | Lista todos los gastos |
-| GET | /gastos/{id} | Busca gasto por ID |
-| GET | /gastos/categoria/{categoriaId} | Gastos por categoría |
-| GET | /gastos/proveedor/{proveedorId} | Gastos por proveedor |
-| POST | /gastos | Crea un gasto |
-| PUT | /gastos/{id} | Actualiza un gasto |
-| DELETE | /gastos/{id} | Elimina un gasto |
-
-### Categorías de gasto `http://localhost:9090/categorias-gasto`
+### Proveedores `http://localhost:9090/api/v1/proveedores`
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /categorias-gasto | Lista categorías de gasto |
-| GET | /categorias-gasto/{id} | Busca categoría de gasto por ID |
-| POST | /categorias-gasto | Crea categoría de gasto |
-| PUT | /categorias-gasto/{id} | Actualiza categoría de gasto |
-| DELETE | /categorias-gasto/{id} | Elimina categoría de gasto |
+| GET | /api/v1/proveedores | Lista todos los proveedores |
+| GET | /api/v1/proveedores/activos | Lista proveedores activos |
+| GET | /api/v1/proveedores/{id} | Busca proveedor por ID |
+| POST | /api/v1/proveedores | Crea un proveedor |
+| PUT | /api/v1/proveedores/{id} | Actualiza un proveedor |
+| DELETE | /api/v1/proveedores/{id} | Elimina un proveedor |
+| PATCH | /api/v1/proveedores/{id}/desactivar | Desactiva un proveedor |
+| PATCH | /api/v1/proveedores/{id}/activar | Activa un proveedor |
+
+### Proveedor-Materiales `http://localhost:9090/api/v1/proveedor-materiales`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/v1/proveedor-materiales/proveedor/{proveedorId} | Materiales de un proveedor |
+| GET | /api/v1/proveedor-materiales/material/{materialId} | Proveedores de un material |
+| POST | /api/v1/proveedor-materiales | Crea relación proveedor-material |
+| PUT | /api/v1/proveedor-materiales/{id} | Actualiza relación |
+| DELETE | /api/v1/proveedor-materiales/{id} | Elimina relación |
+
+### Reportes `http://localhost:9090/api/v1/reportes`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/v1/reportes | Lista todos los reportes generados |
+| GET | /api/v1/reportes/{id} | Busca reporte por ID |
+| POST | /api/v1/reportes | Crea un reporte manualmente |
+| DELETE | /api/v1/reportes/{id} | Elimina un reporte |
+| GET | /api/v1/reportes/generar/api/v1/ventas?desde=...&hasta=... | Genera reporte de ventas por período |
+| GET | /api/v1/reportes/generar/stock-critico | Genera reporte de stock crítico |
+| GET | /api/v1/reportes/generar/api/v1/pedidos | Genera reporte de estado de pedidos |
+
+### Galería `http://localhost:9090/api/v1/galeria`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/v1/galeria | Lista todas las imágenes |
+| GET | /api/v1/galeria/{id} | Busca imagen por ID |
+| GET | /api/v1/galeria/producto/{productoId} | Imágenes de un producto |
+| POST | /api/v1/galeria | Sube una imagen |
+| DELETE | /api/v1/galeria/{id} | Elimina una imagen |
+
+### Gastos `http://localhost:9090/api/v1/gastos`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/v1/gastos | Lista todos los gastos |
+| GET | /api/v1/gastos/{id} | Busca gasto por ID |
+| GET | /api/v1/gastos/categoria/{categoriaId} | Gastos por categoría |
+| GET | /api/v1/gastos/proveedor/{proveedorId} | Gastos por proveedor |
+| POST | /api/v1/gastos | Crea un gasto |
+| PUT | /api/v1/gastos/{id} | Actualiza un gasto |
+| DELETE | /api/v1/gastos/{id} | Elimina un gasto |
+
+### Categorías de gasto `http://localhost:9090/api/v1/categorias-gasto`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/v1/categorias-gasto | Lista categorías de gasto |
+| GET | /api/v1/categorias-gasto/{id} | Busca categoría de gasto por ID |
+| POST | /api/v1/categorias-gasto | Crea categoría de gasto |
+| PUT | /api/v1/categorias-gasto/{id} | Actualiza categoría de gasto |
+| DELETE | /api/v1/categorias-gasto/{id} | Elimina categoría de gasto |
 
 ### Calendario / Producción `http://localhost:9090/api/v1/produccion`
 
@@ -288,7 +288,7 @@ Todos los endpoints pueden consumirse directamente por su puerto o a través del
 
 ### Registrar un usuario
 ```json
-POST http://localhost:9090/auth/registrar
+POST http://localhost:9090/api/v1/auth/registrar
 {
   "nombreUsuario": "vendedor1",
   "contrasena": "vendedor123",
@@ -299,7 +299,7 @@ POST http://localhost:9090/auth/registrar
 
 ### Crear un material
 ```json
-POST http://localhost:9090/materiales
+POST http://localhost:9090/api/v1/materiales
 {
   "nombre": "Hilo de seda",
   "descripcion": "Hilo fino para pulseras",
@@ -312,7 +312,7 @@ POST http://localhost:9090/materiales
 
 ### Crear un producto
 ```json
-POST http://localhost:9090/productos
+POST http://localhost:9090/api/v1/productos
 {
   "nombre": "Pulsera trenzada",
   "descripcion": "Pulsera hecha a mano con hilo de seda",
@@ -324,7 +324,7 @@ POST http://localhost:9090/productos
 
 ### Crear una venta
 ```json
-POST http://localhost:9090/ventas
+POST http://localhost:9090/api/v1/ventas
 {
   "clienteId": 1,
   "metodoPago": "efectivo",
@@ -340,7 +340,7 @@ POST http://localhost:9090/ventas
 
 ### Crear un pedido
 ```json
-POST http://localhost:9090/pedidos
+POST http://localhost:9090/api/v1/pedidos
 {
   "clienteId": 1,
   "descripcion": "Pulsera personalizada con nombre",
@@ -353,21 +353,21 @@ POST http://localhost:9090/pedidos
 
 ### Cambiar estado de un pedido
 ```
-PATCH http://localhost:9090/pedidos/1/estado?nuevoEstado=en_fabricacion
+PATCH http://localhost:9090/api/v1/pedidos/1/estado?nuevoEstado=en_fabricacion
 ```
 
 Estados válidos: `pendiente` → `en_fabricacion` → `listo_para_entrega` → `entregado`
 
 ### Cambiar estado de una producción
 ```
-PATCH http://localhost:9090/calendario/produccion/1/estado?nuevoEstado=en_proceso
+PATCH http://localhost:9090/api/v1/produccion/1/estado?nuevoEstado=en_proceso
 ```
 
 Estados válidos: `programado` → `en_proceso` → `finalizado`. Se puede cancelar desde cualquier estado activo (`cancelado`).
 
 ### Crear una categoría
 ```json
-POST http://localhost:9090/categorias
+POST http://localhost:9090/api/v1/categorias
 {
   "nombre": "Pulseras",
   "descripcion": "Todo tipo de pulseras",
@@ -377,9 +377,8 @@ POST http://localhost:9090/categorias
 
 ### Generar reporte de ventas
 ```
-GET http://localhost:9090/reportes/generar/ventas?desde=2026-01-01&hasta=2026-06-21
+GET http://localhost:9090/api/v1/reportes/generar/ventas?desde=2026-01-01&hasta=2026-06-21
 ```
-⚠️ Por el bug #1 y #2 descritos arriba, este endpoint actualmente no logra consultar a `ventas` ni a `productos` correctamente, por lo que el reporte generado queda con conteos en `0`.
 
 ---
 
@@ -391,8 +390,8 @@ GET http://localhost:9090/reportes/generar/ventas?desde=2026-01-01&hasta=2026-06
 | ventas | productos (8082) | Enriquecer ventas con datos del producto vendido |
 | pedidos | productos (8082) | Verifica que el producto exista antes de crear el pedido |
 | gastos | proveedores (8086) | Enriquecer gastos con datos del proveedor |
-| reportes | productos, materiales, ventas, pedidos, gastos | Consolidar datos para generar reportes ⚠️ ver bugs conocidos |
-| service_calendario | productos (8082), pedidos (8085) | Enriquecer producción con datos de producto y pedido ⚠️ ver bugs conocidos |
+| reportes | productos, materiales, ventas, pedidos, gastos | Consolidar datos para generar reportes ⚠️ |
+| service_calendario | productos (8082), pedidos (8085) | Enriquecer producción con datos de producto y pedido ⚠️ |
 | galeria | - | Servicio autónomo |
 | categories | - | Servicio autónomo |
 
@@ -400,14 +399,25 @@ El **Gateway** (puerto 9090) centraliza el acceso a todos los microservicios, va
 
 ---
 
-## ⚠️ Bugs conocidos
+## Mapeo de rutas (versión /api/v1)
 
-Estos problemas existen actualmente en el código y están pendientes de corrección:
+| Ruta antigua | Ruta nueva |
+|---|---|
+| `/auth/**` | `/api/v1/auth/**` |
+| `/materiales/**` | `/api/v1/materiales/**` |
+| `/productos/**` | `/api/v1/productos/**` |
+| `/ventas/**` | `/api/v1/ventas/**` |
+| `/categorias/**` | `/api/v1/categorias/**` |
+| `/pedidos/**` | `/api/v1/pedidos/**` |
+| `/pedido-materiales/**` | `/api/v1/pedido-materiales/**` |
+| `/proveedores/**` | `/api/v1/proveedores/**` |
+| `/proveedor-materiales/**` | `/api/v1/proveedor-materiales/**` |
+| `/reportes/**` | `/api/v1/reportes/**` |
+| `/galeria/**` | `/api/v1/galeria/**` |
+| `/gastos/**` | `/api/v1/gastos/**` |
+| `/categorias-gasto/**` | `/api/v1/categorias-gasto/**` |
 
-1. **`reportes` llama a rutas equivocadas en los demás servicios.** Usa prefijos `/api/v1/...` (`/api/v1/materiales/stock-bajo`, `/api/v1/productos`, `/api/v1/ventas`, `/api/v1/pedidos`) que no existen en los controladores reales (que no tienen ese prefijo, ej. `/materiales/stock-bajo`, `/productos`). Como las llamadas fallan en silencio (`onErrorResume`), los reportes generados (`/reportes/generar/...`) siempre muestran conteos en `0`.
-2. **`reportes` apunta al puerto equivocado para pedidos.** En `application.properties`, `microservicio.pedidos.url=http://localhost:8084` (el puerto de `categories`), debería ser `8085`.
-3. **`service_calendario` también usa rutas con prefijo `/api/v1/` al llamar a `productos` y `pedidos`** (`/api/v1/productos/{id}`, `/api/v1/pedidos/{id}`), pero esos controladores no tienen ese prefijo. Por esto, `datosProducto` y `datosPedido` siempre salen `null` al consultar una producción, aunque los puertos configurados (8082 y 8085) sí son correctos.
-4. **`materiales` — endpoint de stock bajo no funciona como se espera.** `GET /materiales/stock-bajo` filtra `stockActual < 0`, pero debería comparar `stockActual < stockMinimo`. Como el stock normalmente nunca es negativo, este endpoint nunca devuelve resultados útiles.
+> `service_calendario` ya usaba `/api/v1/produccion/**` y se mantiene sin cambios.
 
 ---
 
