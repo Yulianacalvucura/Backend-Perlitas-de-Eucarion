@@ -9,7 +9,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Relación entre un producto y sus materiales requeridos")
+@Schema(description = "RelaciÃ³n entre un producto y sus materiales requeridos")
 public class ProductoMaterial {
 
     @Id

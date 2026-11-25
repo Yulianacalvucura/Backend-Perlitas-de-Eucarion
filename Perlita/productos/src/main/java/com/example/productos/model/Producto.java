@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Producto terminado o en proceso de fabricación")
+@Schema(description = "Producto terminado o en proceso de fabricaciÃ³n")
 public class Producto {
 
     @Id

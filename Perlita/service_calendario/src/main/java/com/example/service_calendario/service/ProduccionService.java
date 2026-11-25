@@ -6,6 +6,8 @@ import com.example.service_calendario.model.Bloqueo;
 import com.example.service_calendario.model.Produccion;
 import com.example.service_calendario.repository.BloqueoRepository;
 import com.example.service_calendario.repository.ProduccionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -20,6 +22,12 @@ import java.util.Set;
 
 @Service
 public class ProduccionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProduccionService.class);
+    private static final String ESTADO_FINALIZADO = "finalizado";
+    private static final String ESTADO_EN_FABRICACION = "en_fabricacion";
+    private static final String URI_CAMBIAR_ESTADO_PEDIDO =
+            "/pedidos/{id}/estado?nuevoEstado=listo_para_entrega";
 
     private final ProduccionRepository produccionRepository;
     private final BloqueoRepository bloqueoRepository;
@@ -61,6 +69,7 @@ public class ProduccionService {
         Produccion existente = produccionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producción no encontrada con id: " + id));
 
+        String estadoAnterior = existente.getEstado();
         existente.setPedidoId(datos.getPedidoId());
         existente.setProductoId(datos.getProductoId());
         existente.setFechaInicio(datos.getFechaInicio());
@@ -69,7 +78,11 @@ public class ProduccionService {
         existente.setEstado(datos.getEstado());
         existente.setNotas(datos.getNotas());
 
-        return produccionRepository.save(existente);
+        Produccion guardada = produccionRepository.save(existente);
+        if (esFinalizado(datos.getEstado()) && !esFinalizado(estadoAnterior)) {
+            notificarPedidoListoParaEntrega(guardada.getPedidoId());
+        }
+        return guardada;
     }
 
     private static final Map<String, Set<String>> TRANSICIONES_PROD = Map.of(
@@ -91,13 +104,18 @@ public class ProduccionService {
                 "Transición inválida: " + actual + " → " + nuevoEstado);
         }
 
+        boolean finalizando = esFinalizado(nuevoEstado);
         existente.setEstado(nuevoEstado);
 
-        if ("finalizado".equalsIgnoreCase(nuevoEstado)) {
+        if (finalizando) {
             existente.setFechaFinReal(LocalDate.now());
         }
 
-        return produccionRepository.save(existente);
+        Produccion guardada = produccionRepository.save(existente);
+        if (finalizando) {
+            notificarPedidoListoParaEntrega(guardada.getPedidoId());
+        }
+        return guardada;
     }
 
     public void eliminar(Integer id) {
@@ -121,6 +139,38 @@ public class ProduccionService {
             throw new IllegalArgumentException(
                     "No se puede programar producción: existe un bloqueo en ese rango de fechas (" +
                             bloqueos.get(0).getMotivo() + ")");
+        }
+    }
+
+    private boolean esFinalizado(String estado) {
+        return ESTADO_FINALIZADO.equalsIgnoreCase(estado);
+    }
+
+    private void notificarPedidoListoParaEntrega(Integer pedidoId) {
+        if (pedidoId == null) {
+            return;
+        }
+
+        try {
+            Map<?, ?> pedido = pedidosWebClient.get()
+                    .uri("/pedidos/{id}", pedidoId)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (pedido == null
+                    || !ESTADO_EN_FABRICACION.equalsIgnoreCase(String.valueOf(pedido.get("estado")))) {
+                return;
+            }
+
+            pedidosWebClient.patch()
+                    .uri(URI_CAMBIAR_ESTADO_PEDIDO, pedidoId)
+                    .retrieve()
+                    .bodyToMono(Object.class)
+                    .block();
+        } catch (RuntimeException e) {
+            log.warn("No se pudo marcar el pedido {} como listo_para_entrega; "
+                    + "la producción finalizó igualmente", pedidoId, e);
         }
     }
 

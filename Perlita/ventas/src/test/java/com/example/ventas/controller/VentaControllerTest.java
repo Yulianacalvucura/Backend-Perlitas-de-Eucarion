@@ -78,6 +78,7 @@ class VentaControllerTest {
         input.setClienteId(1L);
         input.setMetodoPago("efectivo");
         input.setTotal(200.0);
+        input.setFecha(LocalDate.now());
 
         Venta saved = new Venta();
         saved.setId(1L);

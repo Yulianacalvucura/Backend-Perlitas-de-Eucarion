@@ -80,4 +80,18 @@ public class ReporteController {
     public ResponseEntity<Reporte> generarReportePedidos() {
         return ResponseEntity.ok(reporteService.generarReportePedidos());
     }
+
+    @Operation(summary = "Generar reporte de gastos por categoría")
+    @GetMapping("/generar/gastos-categoria")
+    public ResponseEntity<Reporte> generarReporteGastosPorCategoria() {
+        return ResponseEntity.ok(reporteService.generarReporteGastosPorCategoria());
+    }
+
+    @Operation(summary = "Generar reporte de utilidad por periodo")
+    @GetMapping("/generar/utilidad")
+    public ResponseEntity<Reporte> generarReporteUtilidad(
+            @RequestParam(defaultValue = "#{T(java.time.LocalDate).now().minusDays(30)}") LocalDate desde,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDate).now()}") LocalDate hasta) {
+        return ResponseEntity.ok(reporteService.generarReporteUtilidad(desde, hasta));
+    }
 }

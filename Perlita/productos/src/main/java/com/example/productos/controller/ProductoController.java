@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -66,6 +67,19 @@ public class ProductoController {
         service.buscarPorId(id).orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
         producto.setId(id);
         return ResponseEntity.ok(service.guardar(producto));
+    }
+
+    @Operation(summary = "Ajustar el stock disponible de un producto",
+               description = "El campo 'ajuste' es un delta: negativo descuenta y positivo repone.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Stock actualizado"),
+            @ApiResponse(responseCode = "400", description = "Ajuste inválido o stock insuficiente"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<Producto> ajustarStock(@PathVariable Long id,
+                                                 @RequestBody Map<String, Integer> body) {
+        return ResponseEntity.ok(service.ajustarStock(id, body.get("ajuste")));
     }
 
     @Operation(summary = "Eliminar un producto")
