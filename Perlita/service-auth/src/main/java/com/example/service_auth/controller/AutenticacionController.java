@@ -12,8 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
+import org.springframework.validation.annotation.Validated;
 
 import com.example.service_auth.dto.AuthRequest;
+import com.example.service_auth.dto.Registro;
 import com.example.service_auth.service.AuthService;
 
 @CrossOrigin(origins = "*")
@@ -25,13 +28,16 @@ public class AutenticacionController
     @Autowired
     private AuthService authService;
 
-    @Operation(summary = "Registrar un nuevo usuario", description = "Guarda el usuario mapeando sus roles desde el DTO")
+    @Operation(summary = "Registrar un nuevo usuario", description = "Solo ADMIN puede registrar; roles permitidos: ADMIN y VENDEDOR")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos")
+            @ApiResponse(responseCode = "400", description = "Datos o rol inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos de ADMIN"),
+            @ApiResponse(responseCode = "409", description = "El nombre de usuario ya existe")
     })
     @PostMapping("/registrar")
-    public ResponseEntity<String> registrar(@Valid @RequestBody AuthRequest request)
+    public ResponseEntity<String> registrar(@Validated({Default.class, Registro.class}) @RequestBody AuthRequest request)
     {
         return ResponseEntity.ok(authService.registrar(request));
     }
