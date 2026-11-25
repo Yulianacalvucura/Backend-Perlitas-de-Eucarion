@@ -17,7 +17,7 @@ public class WebClientConfig {
     @Value("${microservicio.ventas.url:http://localhost:8083}")
     private String ventasUrl;
 
-    @Value("${microservicio.pedidos.url:http://localhost:8084}")
+    @Value("${microservicio.pedidos.url:http://localhost:8085}")
     private String pedidosUrl;
 
     @Value("${microservicio.gastos.url:http://localhost:8089}")

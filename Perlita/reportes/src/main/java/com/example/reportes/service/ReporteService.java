@@ -56,14 +56,14 @@ public class ReporteService {
     public Reporte generarReporteVentas(LocalDate desde, LocalDate hasta) {
         try {
             List<Map<String, Object>> ventas = ventasWebClient.get()
-                    .uri("/ventas")
+                    .uri("/api/v1/ventas")
                     .retrieve()
                     .bodyToMono(List.class)
                     .onErrorResume(e -> Mono.empty())
                     .block();
 
             List<Map<String, Object>> productos = productosWebClient.get()
-                    .uri("/productos")
+                    .uri("/api/v1/productos")
                     .retrieve()
                     .bodyToMono(List.class)
                     .onErrorResume(e -> Mono.empty())
@@ -86,7 +86,7 @@ public class ReporteService {
     public Reporte generarReporteStockCritico() {
         try {
             List<Map<String, Object>> materiales = materialesWebClient.get()
-                    .uri("/materiales/stock-bajo")
+                    .uri("/api/v1/materiales/stock-bajo")
                     .retrieve()
                     .bodyToMono(List.class)
                     .onErrorResume(e -> Mono.empty())
@@ -109,7 +109,7 @@ public class ReporteService {
     public Reporte generarReportePedidos() {
         try {
             List<Map<String, Object>> pedidos = pedidosWebClient.get()
-                    .uri("/pedidos")
+                    .uri("/api/v1/pedidos")
                     .retrieve()
                     .bodyToMono(List.class)
                     .onErrorResume(e -> Mono.empty())
