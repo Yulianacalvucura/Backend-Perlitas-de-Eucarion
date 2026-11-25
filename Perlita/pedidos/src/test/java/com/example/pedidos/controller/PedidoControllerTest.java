@@ -38,7 +38,7 @@ class PedidoControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Pedido()));
 
-        mockMvc.perform(get("/pedidos"))
+        mockMvc.perform(get("/api/v1/pedidos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -50,7 +50,7 @@ class PedidoControllerTest {
         p.setDescripcion("Test");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(p));
 
-        mockMvc.perform(get("/pedidos/1"))
+        mockMvc.perform(get("/api/v1/pedidos/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.descripcion").value("Test"));
@@ -60,7 +60,7 @@ class PedidoControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/pedidos/99"))
+        mockMvc.perform(get("/api/v1/pedidos/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -70,6 +70,7 @@ class PedidoControllerTest {
         input.setClienteId(1L);
         input.setDescripcion("Nuevo pedido");
         input.setTotal(BigDecimal.valueOf(500));
+        input.setFechaPedido(LocalDate.now());
 
         Pedido saved = new Pedido();
         saved.setId(1L);
@@ -79,7 +80,7 @@ class PedidoControllerTest {
         saved.setFechaPedido(LocalDate.now());
         when(service.guardar(any(Pedido.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/pedidos")
+        mockMvc.perform(post("/api/v1/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -92,11 +93,13 @@ class PedidoControllerTest {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Pedido()));
 
         Pedido update = new Pedido();
+        update.setClienteId(1L);
         update.setDescripcion("Actualizado");
         update.setTotal(BigDecimal.valueOf(999));
+        update.setFechaPedido(LocalDate.now());
         when(service.guardar(any(Pedido.class))).thenReturn(update);
 
-        mockMvc.perform(put("/pedidos/1")
+        mockMvc.perform(put("/api/v1/pedidos/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -107,7 +110,7 @@ class PedidoControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Pedido()));
 
-        mockMvc.perform(delete("/pedidos/1"))
+        mockMvc.perform(delete("/api/v1/pedidos/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);
@@ -119,7 +122,7 @@ class PedidoControllerTest {
         p.setEstado("pendiente");
         when(service.listarPorEstado("pendiente")).thenReturn(List.of(p));
 
-        mockMvc.perform(get("/pedidos/estado/pendiente"))
+        mockMvc.perform(get("/api/v1/pedidos/estado/pendiente"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].estado").value("pendiente"));
     }
@@ -132,7 +135,7 @@ class PedidoControllerTest {
         when(service.cambiarEstado(1L, "en_fabricacion"))
                 .thenReturn(ResponseEntity.ok((Object) actualizado));
 
-        mockMvc.perform(patch("/pedidos/1/estado")
+        mockMvc.perform(patch("/api/v1/pedidos/1/estado")
                         .param("nuevoEstado", "en_fabricacion"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("en_fabricacion"));
@@ -143,7 +146,7 @@ class PedidoControllerTest {
         when(service.cambiarEstado(1L, "entregado"))
                 .thenReturn(ResponseEntity.badRequest().body((Object) "Transición inválida"));
 
-        mockMvc.perform(patch("/pedidos/1/estado")
+        mockMvc.perform(patch("/api/v1/pedidos/1/estado")
                         .param("nuevoEstado", "entregado"))
                 .andExpect(status().isBadRequest());
     }
@@ -152,7 +155,7 @@ class PedidoControllerTest {
     void listarPorCliente_shouldReturn200() throws Exception {
         when(service.listarPorCliente(5L)).thenReturn(List.of(new Pedido()));
 
-        mockMvc.perform(get("/pedidos/cliente/5"))
+        mockMvc.perform(get("/api/v1/pedidos/cliente/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }

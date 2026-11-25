@@ -86,7 +86,7 @@ public class PedidoService {
     public boolean verificarProductoExiste(Long productoId) {
         if (productoId == null) return false;
         Boolean existe = productosWebClient.get()
-                .uri("/productos/{id}", productoId)
+                .uri("/api/v1/productos/{id}", productoId)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .map(r -> true)

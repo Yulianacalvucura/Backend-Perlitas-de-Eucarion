@@ -17,10 +17,10 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/pedidos/**", "/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.PUT, "/pedidos/**", "/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.DELETE, "/pedidos/**", "/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/pedidos/**", "/pedido-materiales/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/pedidos/**", "/api/v1/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/pedidos/**", "/api/v1/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/pedidos/**", "/api/v1/pedido-materiales/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/v1/pedidos/**", "/api/v1/pedido-materiales/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/pedidos/v3/api-docs/",
                     "/api/v1/pedidos/v3/api-docs/**",
