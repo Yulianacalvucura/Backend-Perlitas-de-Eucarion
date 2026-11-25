@@ -21,6 +21,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/productos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
                 .requestMatchers(HttpMethod.PUT, "/productos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.PATCH, "/productos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
                 .requestMatchers(HttpMethod.POST, "/productos/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/productos/**").hasAuthority("ADMIN")
                 .requestMatchers(

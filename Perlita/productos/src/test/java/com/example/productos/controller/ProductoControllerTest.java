@@ -109,6 +109,22 @@ class ProductoControllerTest {
     }
 
     @Test
+    void ajustarStock_shouldReturn200() throws Exception {
+        Producto actualizado = new Producto();
+        actualizado.setId(1L);
+        actualizado.setStockDisponible(7);
+        when(service.ajustarStock(1L, -3)).thenReturn(actualizado);
+
+        mockMvc.perform(patch("/productos/1/stock")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ajuste\":-3}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockDisponible").value(7));
+
+        verify(service).ajustarStock(1L, -3);
+    }
+
+    @Test
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Producto()));
 

@@ -70,6 +70,7 @@ class PedidoControllerTest {
         input.setClienteId(1L);
         input.setDescripcion("Nuevo pedido");
         input.setTotal(BigDecimal.valueOf(500));
+        input.setFechaPedido(LocalDate.now());
 
         Pedido saved = new Pedido();
         saved.setId(1L);
@@ -92,8 +93,10 @@ class PedidoControllerTest {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Pedido()));
 
         Pedido update = new Pedido();
+        update.setClienteId(1L);
         update.setDescripcion("Actualizado");
         update.setTotal(BigDecimal.valueOf(999));
+        update.setFechaPedido(LocalDate.now());
         when(service.guardar(any(Pedido.class))).thenReturn(update);
 
         mockMvc.perform(put("/pedidos/1")

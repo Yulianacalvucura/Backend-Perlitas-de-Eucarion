@@ -1,17 +1,13 @@
 package com.example.pedidos.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.Set;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import com.example.pedidos.exception.ServicioNoDisponibleException;
-import com.example.pedidos.exception.ResourceNotFoundException;
 import com.example.pedidos.model.Pedido;
 import com.example.pedidos.repository.PedidoRepository;
 
@@ -19,16 +15,16 @@ import com.example.pedidos.repository.PedidoRepository;
 public class PedidoService {
 
     private final PedidoRepository repository;
-    private final WebClient productosWebClient;
-    private final WebClient calendarioWebClient;
 
-    public PedidoService(PedidoRepository repository,
-                         @Qualifier("productosWebClient") WebClient productosWebClient,
-                         @Qualifier("calendarioWebClient") WebClient calendarioWebClient) {
+    public PedidoService(PedidoRepository repository) {
         this.repository = repository;
-        this.productosWebClient = productosWebClient;
-        this.calendarioWebClient = calendarioWebClient;
     }
+
+    private static final Map<String, Set<String>> TRANSICIONES_VALIDAS = Map.of(
+        "pendiente",          Set.of("en_fabricacion", "cancelado"),
+        "en_fabricacion",     Set.of("listo_para_entrega", "cancelado"),
+        "listo_para_entrega", Set.of("entregado")
+    );
 
     public List<Pedido> listarTodos() {
         return repository.findAll();
@@ -43,9 +39,8 @@ public class PedidoService {
     }
 
     public Pedido guardar(Pedido pedido) {
-        if (pedido.getFechaPedido() == null) {
-            pedido.setFechaPedido(LocalDate.now());
-        }
+        validarMontos(pedido);
+        validarFechas(pedido);
         return repository.save(pedido);
     }
 
@@ -61,43 +56,41 @@ public class PedidoService {
         return repository.findByClienteId(clienteId);
     }
 
-    private static final Map<String, String> TRANSICIONES_VALIDAS = Map.of(
-        "pendiente",          "en_fabricacion",
-        "en_fabricacion",     "listo_para_entrega",
-        "listo_para_entrega", "entregado"
-    );
+    private void validarMontos(Pedido pedido) {
+        BigDecimal total = pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO;
+        BigDecimal abono = pedido.getAbonoPagado() != null ? pedido.getAbonoPagado() : BigDecimal.ZERO;
+        if (abono.compareTo(total) > 0) {
+            throw new IllegalArgumentException("El abono pagado no puede ser mayor que el total del pedido");
+        }
+        pedido.setTotal(total);
+        pedido.setAbonoPagado(abono);
+    }
+
+    private void validarFechas(Pedido pedido) {
+        LocalDate fechaPedido = pedido.getFechaPedido() != null ? pedido.getFechaPedido() : LocalDate.now();
+        if (pedido.getFechaEntrega() != null && pedido.getFechaEntrega().isBefore(fechaPedido)) {
+            throw new IllegalArgumentException("La fecha de entrega no puede ser anterior a la fecha del pedido");
+        }
+        pedido.setFechaPedido(fechaPedido);
+    }
 
     public ResponseEntity<Object> cambiarEstado(Long id, String nuevoEstado) {
         return repository.findById(id).map(pedido -> {
             String estadoActual = pedido.getEstado();
-            String siguiente = TRANSICIONES_VALIDAS.get(estadoActual);
+            Set<String> permitidos = TRANSICIONES_VALIDAS.get(estadoActual);
 
-            if (siguiente == null || !siguiente.equals(nuevoEstado)) {
+            if (permitidos == null || !permitidos.contains(nuevoEstado)) {
+                String destinos = permitidos == null || permitidos.isEmpty()
+                        ? "ninguno (ya está completado o cancelado)"
+                        : String.join(", ", permitidos);
                 return ResponseEntity
                     .badRequest()
                     .body((Object) ("Transición inválida: " + estadoActual + " → " + nuevoEstado
-                        + ". Solo se permite: " + estadoActual + " → "
-                        + (siguiente != null ? siguiente : "ninguno (ya está completado)")));
+                        + ". Solo se permite: " + estadoActual + " → " + destinos));
             }
 
             pedido.setEstado(nuevoEstado);
             return ResponseEntity.ok((Object) repository.save(pedido));
         }).orElse(ResponseEntity.notFound().build());
-    }
-
-    public boolean verificarProductoExiste(Long productoId) {
-        if (productoId == null) return false;
-        try {
-            productosWebClient.get()
-                    .uri("/productos/{id}", productoId)
-                    .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
-            return true;
-        } catch (WebClientResponseException.NotFound e) {
-            return false;
-        } catch (WebClientResponseException | WebClientRequestException e) {
-            throw new ServicioNoDisponibleException("Servicio de productos no disponible", e);
-        }
     }
 }

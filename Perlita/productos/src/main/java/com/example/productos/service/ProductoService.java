@@ -1,5 +1,6 @@
 package com.example.productos.service;
 
+import com.example.productos.exception.ResourceNotFoundException;
 import com.example.productos.exception.ServicioNoDisponibleException;
 import com.example.productos.model.Producto;
 import com.example.productos.model.ProductoMaterial;
@@ -8,6 +9,7 @@ import com.example.productos.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -41,6 +43,25 @@ public class ProductoService {
     }
 
     public Producto guardar(Producto producto) {
+        return productoRepository.save(producto);
+    }
+
+    @Transactional
+    public Producto ajustarStock(Long id, Integer ajuste) {
+        if (ajuste == null) {
+            throw new IllegalArgumentException("El ajuste de stock es obligatorio");
+        }
+
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
+
+        int stockActual = producto.getStockDisponible() != null ? producto.getStockDisponible() : 0;
+        int nuevoStock = stockActual + ajuste;
+        if (nuevoStock < 0) {
+            throw new IllegalArgumentException("Stock insuficiente: el ajuste dejaría el stock en " + nuevoStock);
+        }
+
+        producto.setStockDisponible(nuevoStock);
         return productoRepository.save(producto);
     }
 

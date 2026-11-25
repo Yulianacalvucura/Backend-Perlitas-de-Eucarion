@@ -32,6 +32,16 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Solicitud inválida",
+                ex.getMessage()
+        );
+        return ResponseEntity.badRequest().body(error);
+    }
+
     @ExceptionHandler(ServicioNoDisponibleException.class)
     public ResponseEntity<ErrorResponse> handleServicioNoDisponible(ServicioNoDisponibleException ex) {
         ErrorResponse error = new ErrorResponse(
