@@ -73,14 +73,14 @@ Las bases de datos se crean automáticamente al iniciar cada microservicio.
 
 ### 4. Autenticación
 
-Antes de consumir los endpoints, registre un usuario y obtenga un token JWT:
+Antes de consumir los endpoints, obtenga un token JWT con `POST /auth/login`. El registro de usuarios (`POST /auth/registrar`) requiere un token de ADMIN y solo acepta los roles `ADMIN` y `VENDEDOR`.
 
 ```bash
-# Registrar usuario
+# Registrar usuario (requiere Authorization: Bearer <token de ADMIN>)
 POST http://localhost:9090/auth/registrar
 {
   "nombreUsuario": "admin",
-  "contrasena": "123456",
+  "contrasena": "admin123",
   "correo": "admin@perlitas.cl",
   "roles": ["ADMIN"]
 }
@@ -89,7 +89,7 @@ POST http://localhost:9090/auth/registrar
 POST http://localhost:9090/auth/login
 {
   "nombreUsuario": "admin",
-  "contrasena": "123456"
+  "contrasena": "admin123"
 }
 ```
 
@@ -291,7 +291,7 @@ Todos los endpoints pueden consumirse directamente por su puerto o a través del
 POST http://localhost:9090/auth/registrar
 {
   "nombreUsuario": "vendedor1",
-  "contrasena": "123456",
+  "contrasena": "vendedor123",
   "correo": "vendedor@perlitas.cl",
   "roles": ["VENDEDOR"]
 }
@@ -417,7 +417,8 @@ Estos problemas existen actualmente en el código y están pendientes de correcc
 |---|---|
 | ADMIN | Acceso completo a todos los endpoints |
 | VENDEDOR | GET, POST, PUT - no puede eliminar recursos |
-| CLIENTE | Solo GET (lectura) |
+
+Solo ADMIN puede registrar usuarios. No existe el rol CLIENTE.
 
 ---
 
