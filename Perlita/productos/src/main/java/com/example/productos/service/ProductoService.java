@@ -1,12 +1,17 @@
 package com.example.productos.service;
 
+import com.example.productos.exception.ServicioNoDisponibleException;
 import com.example.productos.model.Producto;
 import com.example.productos.model.ProductoMaterial;
 import com.example.productos.repository.ProductoMaterialRepository;
 import com.example.productos.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -20,7 +25,8 @@ public class ProductoService {
     private ProductoMaterialRepository productoMaterialRepository;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    @Qualifier("materialesWebClient")
+    private WebClient materialesWebClient;
 
     public List<Producto> listarTodos() {
         return productoRepository.findAll();
@@ -47,15 +53,16 @@ public class ProductoService {
                 .findByProductoId(productoId);
         materiales.forEach(pm -> {
             try {
-                Object material = webClientBuilder.build()
-                        .get()
-                        .uri("http://localhost:8081/materiales/" + pm.getMaterialId())
+                Object material = materialesWebClient.get()
+                        .uri("/materiales/{id}", pm.getMaterialId())
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();
                 pm.setDatosMaterial(material);
-            } catch (Exception e) {
-                pm.setDatosMaterial("Material no disponible");
+            } catch (WebClientResponseException.NotFound e) {
+                pm.setDatosMaterial("Material no encontrado");
+            } catch (WebClientResponseException | WebClientRequestException e) {
+                throw new ServicioNoDisponibleException("Servicio de materiales no disponible", e);
             }
         });
         return materiales;

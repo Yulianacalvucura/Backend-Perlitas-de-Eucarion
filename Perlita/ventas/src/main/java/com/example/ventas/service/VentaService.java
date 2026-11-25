@@ -1,11 +1,16 @@
 package com.example.ventas.service;
 
+import com.example.ventas.exception.ServicioNoDisponibleException;
 import com.example.ventas.model.Venta;
 import com.example.ventas.repository.VentaProductoRepository;
 import com.example.ventas.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +28,8 @@ public class VentaService {
     private VentaProductoRepository ventaProductoRepository;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    @Qualifier("productosWebClient")
+    private WebClient productosWebClient;
 
     public List<Venta> listarTodas() {
         return ventaRepository.findAll();
@@ -67,15 +73,16 @@ public class VentaService {
 
         venta.getProductos().forEach(vp -> {
             try {
-                Object producto = webClientBuilder.build()
-                        .get()
-                        .uri("http://localhost:8082/productos/" + vp.getProductoId())
+                Object producto = productosWebClient.get()
+                        .uri("/productos/{id}", vp.getProductoId())
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();
                 vp.setDatosProducto(producto);
-            } catch (Exception e) {
-                vp.setDatosProducto("Producto no disponible");
+            } catch (WebClientResponseException.NotFound e) {
+                vp.setDatosProducto("Producto no encontrado");
+            } catch (WebClientResponseException | WebClientRequestException e) {
+                throw new ServicioNoDisponibleException("Servicio de productos no disponible", e);
             }
         });
 

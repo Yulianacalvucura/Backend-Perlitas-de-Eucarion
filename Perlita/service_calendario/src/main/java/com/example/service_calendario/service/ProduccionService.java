@@ -1,6 +1,7 @@
 package com.example.service_calendario.service;
 
 import com.example.service_calendario.exception.ResourceNotFoundException;
+import com.example.service_calendario.exception.ServicioNoDisponibleException;
 import com.example.service_calendario.model.Bloqueo;
 import com.example.service_calendario.model.Produccion;
 import com.example.service_calendario.repository.BloqueoRepository;
@@ -8,6 +9,8 @@ import com.example.service_calendario.repository.ProduccionRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -127,12 +130,13 @@ public class ProduccionService {
                     .uri("/productos/{id}", produccion.getProductoId())
                     .retrieve()
                     .bodyToMono(Map.class)
-                    .onErrorResume(e -> Mono.empty())
                     .block();
 
             produccion.setDatosProducto(producto);
-        } catch (Exception e) {
+        } catch (WebClientResponseException.NotFound e) {
             produccion.setDatosProducto(null);
+        } catch (WebClientResponseException | WebClientRequestException e) {
+            throw new ServicioNoDisponibleException("Servicio de productos no disponible", e);
         }
 
         if (produccion.getPedidoId() != null) {
@@ -141,12 +145,13 @@ public class ProduccionService {
                         .uri("/pedidos/{id}", produccion.getPedidoId())
                         .retrieve()
                         .bodyToMono(Map.class)
-                        .onErrorResume(e -> Mono.empty())
                         .block();
 
                 produccion.setDatosPedido(pedido);
-            } catch (Exception e) {
+            } catch (WebClientResponseException.NotFound e) {
                 produccion.setDatosPedido(null);
+            } catch (WebClientResponseException | WebClientRequestException e) {
+                throw new ServicioNoDisponibleException("Servicio de pedidos no disponible", e);
             }
         }
     }

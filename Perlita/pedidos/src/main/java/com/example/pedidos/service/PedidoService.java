@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.example.pedidos.exception.ServicioNoDisponibleException;
 import com.example.pedidos.exception.ResourceNotFoundException;
 import com.example.pedidos.model.Pedido;
 import com.example.pedidos.repository.PedidoRepository;
@@ -85,13 +87,17 @@ public class PedidoService {
 
     public boolean verificarProductoExiste(Long productoId) {
         if (productoId == null) return false;
-        Boolean existe = productosWebClient.get()
-                .uri("/productos/{id}", productoId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .map(r -> true)
-                .onErrorResume(e -> Mono.just(false))
-                .block();
-        return existe != null && existe;
+        try {
+            productosWebClient.get()
+                    .uri("/productos/{id}", productoId)
+                    .retrieve()
+                    .bodyToMono(Object.class)
+                    .block();
+            return true;
+        } catch (WebClientResponseException.NotFound e) {
+            return false;
+        } catch (WebClientResponseException | WebClientRequestException e) {
+            throw new ServicioNoDisponibleException("Servicio de productos no disponible", e);
+        }
     }
 }

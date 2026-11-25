@@ -1,12 +1,14 @@
 package com.example.gastos.service;
 
 import com.example.gastos.exception.ResourceNotFoundException;
+import com.example.gastos.exception.ServicioNoDisponibleException;
 import com.example.gastos.model.Gasto;
 import com.example.gastos.repository.GastoRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,15 +43,16 @@ public class GastoService {
 
     public Gasto guardar(Gasto gasto) {
         if (gasto.getProveedorId() != null) {
-            Boolean existe = proveedoresWebClient.get()
-                    .uri("/proveedores/{id}", gasto.getProveedorId())
-                    .retrieve()
-                    .bodyToMono(Object.class)
-                    .map(r -> true)
-                    .onErrorResume(e -> Mono.just(false))
-                    .block();
-            if (existe == null || !existe) {
+            try {
+                proveedoresWebClient.get()
+                        .uri("/proveedores/{id}", gasto.getProveedorId())
+                        .retrieve()
+                        .bodyToMono(Object.class)
+                        .block();
+            } catch (WebClientResponseException.NotFound e) {
                 throw new ResourceNotFoundException("Proveedor no encontrado con id: " + gasto.getProveedorId());
+            } catch (WebClientResponseException | WebClientRequestException e) {
+                throw new ServicioNoDisponibleException("Servicio de proveedores no disponible", e);
             }
         }
         if (gasto.getFecha() == null) {

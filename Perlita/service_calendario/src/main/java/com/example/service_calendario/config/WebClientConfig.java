@@ -18,6 +18,7 @@ public class WebClientConfig {
     public WebClient productosWebClient() {
         return WebClient.builder()
                 .baseUrl(productosUrl)
+                .filter(WebClientAuthPropagationFilter.propagateAuthHeaders())
                 .build();
     }
 
@@ -25,6 +26,7 @@ public class WebClientConfig {
     public WebClient pedidosWebClient() {
         return WebClient.builder()
                 .baseUrl(pedidosUrl)
+                .filter(WebClientAuthPropagationFilter.propagateAuthHeaders())
                 .build();
     }
 }
