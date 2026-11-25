@@ -28,7 +28,7 @@ class ProductoServiceTest {
     private ProductoMaterialRepository productoMaterialRepository;
 
     @Mock
-    private WebClient.Builder webClientBuilder;
+    private WebClient materialesWebClient;
 
     @InjectMocks
     private ProductoService service;
@@ -104,14 +104,12 @@ class ProductoServiceTest {
         List<ProductoMaterial> materiales = List.of(pm);
         when(productoMaterialRepository.findByProductoId(1L)).thenReturn(materiales);
 
-        WebClient webClient = mock(WebClient.class);
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
         WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("http://localhost:8081/materiales/10")).thenReturn(requestHeadersSpec);
+        when(materialesWebClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/api/v1/materiales/{id}", 10L)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("material-data"));
 
@@ -120,6 +118,7 @@ class ProductoServiceTest {
         assertEquals(1, actual.size());
         assertEquals("material-data", actual.get(0).getDatosMaterial());
         verify(productoMaterialRepository).findByProductoId(1L);
+        verify(requestHeadersUriSpec).uri("/api/v1/materiales/{id}", 10L);
     }
 
     @Test

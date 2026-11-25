@@ -37,7 +37,7 @@ class ProductoControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Producto()));
 
-        mockMvc.perform(get("/productos"))
+        mockMvc.perform(get("/api/v1/productos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -46,7 +46,7 @@ class ProductoControllerTest {
     void listarActivos_shouldReturn200() throws Exception {
         when(service.listarActivos()).thenReturn(List.of(new Producto()));
 
-        mockMvc.perform(get("/productos/activos"))
+        mockMvc.perform(get("/api/v1/productos/activos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -58,7 +58,7 @@ class ProductoControllerTest {
         p.setNombre("Test");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(p));
 
-        mockMvc.perform(get("/productos/1"))
+        mockMvc.perform(get("/api/v1/productos/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nombre").value("Test"));
@@ -68,7 +68,7 @@ class ProductoControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/productos/99"))
+        mockMvc.perform(get("/api/v1/productos/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -84,7 +84,7 @@ class ProductoControllerTest {
         saved.setPrecioVenta(150.0);
         when(service.guardar(any(Producto.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/productos")
+        mockMvc.perform(post("/api/v1/productos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -101,7 +101,7 @@ class ProductoControllerTest {
         update.setPrecioVenta(200.0);
         when(service.guardar(any(Producto.class))).thenReturn(update);
 
-        mockMvc.perform(put("/productos/1")
+        mockMvc.perform(put("/api/v1/productos/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -112,7 +112,7 @@ class ProductoControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Producto()));
 
-        mockMvc.perform(delete("/productos/1"))
+        mockMvc.perform(delete("/api/v1/productos/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);
@@ -122,7 +122,7 @@ class ProductoControllerTest {
     void verMateriales_shouldReturn200() throws Exception {
         when(service.obtenerMateriales(1L)).thenReturn(List.of(new ProductoMaterial()));
 
-        mockMvc.perform(get("/productos/1/materiales"))
+        mockMvc.perform(get("/api/v1/productos/1/materiales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -139,7 +139,7 @@ class ProductoControllerTest {
         pm.setCantidadRequerida(5.0);
         when(service.agregarMaterial(any(ProductoMaterial.class))).thenReturn(pm);
 
-        mockMvc.perform(post("/productos/1/materiales")
+        mockMvc.perform(post("/api/v1/productos/1/materiales")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pm)))
                 .andExpect(status().isCreated());

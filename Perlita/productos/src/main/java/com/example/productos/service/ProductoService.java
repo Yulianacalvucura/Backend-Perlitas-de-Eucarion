@@ -5,6 +5,7 @@ import com.example.productos.model.ProductoMaterial;
 import com.example.productos.repository.ProductoMaterialRepository;
 import com.example.productos.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
@@ -20,7 +21,8 @@ public class ProductoService {
     private ProductoMaterialRepository productoMaterialRepository;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    @Qualifier("materialesWebClient")
+    private WebClient materialesWebClient;
 
     public List<Producto> listarTodos() {
         return productoRepository.findAll();
@@ -47,9 +49,9 @@ public class ProductoService {
                 .findByProductoId(productoId);
         materiales.forEach(pm -> {
             try {
-                Object material = webClientBuilder.build()
+                Object material = materialesWebClient
                         .get()
-                        .uri("http://localhost:8081/materiales/" + pm.getMaterialId())
+                        .uri("/api/v1/materiales/{id}", pm.getMaterialId())
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();

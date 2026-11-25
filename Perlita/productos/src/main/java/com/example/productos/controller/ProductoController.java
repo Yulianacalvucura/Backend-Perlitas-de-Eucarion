@@ -17,7 +17,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/productos")
+@RequestMapping("/api/v1/productos")
 @Tag(name = "Productos", description = "Gestión de productos")
 public class ProductoController {
 
