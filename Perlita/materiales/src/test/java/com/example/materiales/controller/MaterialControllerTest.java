@@ -37,7 +37,7 @@ class MaterialControllerTest {
     void listar_shouldReturn200WithList() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Material()));
 
-        mockMvc.perform(get("/materiales"))
+        mockMvc.perform(get("/api/v1/materiales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
@@ -51,7 +51,7 @@ class MaterialControllerTest {
         m.setNombre("Test");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(m));
 
-        mockMvc.perform(get("/materiales/1"))
+        mockMvc.perform(get("/api/v1/materiales/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nombre").value("Test"));
@@ -61,7 +61,7 @@ class MaterialControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/materiales/99"))
+        mockMvc.perform(get("/api/v1/materiales/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -85,7 +85,7 @@ class MaterialControllerTest {
 
         when(service.guardar(any(Material.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/materiales")
+        mockMvc.perform(post("/api/v1/materiales")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -107,7 +107,7 @@ class MaterialControllerTest {
         update.setPrecioUnitario(200.0);
         when(service.guardar(any(Material.class))).thenReturn(update);
 
-        mockMvc.perform(put("/materiales/1")
+        mockMvc.perform(put("/api/v1/materiales/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -118,7 +118,7 @@ class MaterialControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Material()));
 
-        mockMvc.perform(delete("/materiales/1"))
+        mockMvc.perform(delete("/api/v1/materiales/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);
@@ -128,7 +128,7 @@ class MaterialControllerTest {
     void stockBajo_shouldReturn200() throws Exception {
         when(service.stockBajo()).thenReturn(List.of(new Material()));
 
-        mockMvc.perform(get("/materiales/stock-bajo"))
+        mockMvc.perform(get("/api/v1/materiales/stock-bajo"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
