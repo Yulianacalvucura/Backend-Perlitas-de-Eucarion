@@ -7,19 +7,7 @@
 -- =====================================================================
 USE db_seguridad_perlita;
 
-INSERT INTO usuarios (nombre_usuario, contrasena, correo)
-SELECT 'cliente1', '$2b$10$Z0BZoshGUFA4AnWFYZakFO/ij41ZbQvVzFgdoXpm0Y3Y8GYN8ji.O', 'cliente1@perlitas.cl'
-WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE nombre_usuario = 'cliente1');
-
-INSERT INTO usuario_roles (usuario_id, rol_id)
-SELECT u.id, r.id FROM usuarios u, roles r
-WHERE u.nombre_usuario = 'cliente1' AND r.nombre_rol = 'CLIENTE'
-  AND NOT EXISTS (
-    SELECT 1 FROM usuario_roles ur WHERE ur.usuario_id = u.id AND ur.rol_id = r.id
-  );
-
 -- admin/admin123 y vendedor/vendedor123 ya los crea el seeder de la app.
--- cliente1/cliente123 lo agrega este script.
 
 
 -- =====================================================================
