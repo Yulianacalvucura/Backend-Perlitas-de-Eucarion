@@ -48,7 +48,7 @@ class AutenticacionControllerTest {
     void login_shouldBePublic() throws Exception {
         when(authService.login("admin", "admin123")).thenReturn("token123");
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(LOGIN_JSON))
                 .andExpect(status().isOk());
@@ -56,7 +56,7 @@ class AutenticacionControllerTest {
 
     @Test
     void registrar_withVendedor_shouldBeForbidden() throws Exception {
-        mockMvc.perform(post("/auth/registrar")
+        mockMvc.perform(post("/api/v1/auth/registrar")
                         .header("X-User-Username", "vendedor")
                         .header("X-User-Roles", "VENDEDOR")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,7 +70,7 @@ class AutenticacionControllerTest {
     void registrar_withAdmin_shouldReturnOk() throws Exception {
         when(authService.registrar(any(AuthRequest.class))).thenReturn("Usuario Registrado");
 
-        mockMvc.perform(post("/auth/registrar")
+        mockMvc.perform(post("/api/v1/auth/registrar")
                         .header("X-User-Username", "admin")
                         .header("X-User-Roles", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +80,7 @@ class AutenticacionControllerTest {
 
     @Test
     void registrar_withShortPassword_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(post("/auth/registrar")
+        mockMvc.perform(post("/api/v1/auth/registrar")
                         .header("X-User-Username", "admin")
                         .header("X-User-Roles", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -20,8 +20,8 @@ public class SecurityConfig
         return http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/registrar").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/registrar").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/auth/v3/api-docs/",
                     "/api/v1/auth/v3/api-docs/**",

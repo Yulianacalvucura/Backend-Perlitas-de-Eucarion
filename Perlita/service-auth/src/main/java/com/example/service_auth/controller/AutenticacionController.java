@@ -21,7 +21,7 @@ import com.example.service_auth.service.AuthService;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 @Tag(name = "Autenticación", description = "Endpoints para registro y login de usuarios")
 public class AutenticacionController
 {
