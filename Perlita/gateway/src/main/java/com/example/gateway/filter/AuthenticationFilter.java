@@ -32,7 +32,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        return path.equals("/auth/login") && "POST".equalsIgnoreCase(request.getMethod());
+        return path.equals("/api/v1/auth/login") && "POST".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
