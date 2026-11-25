@@ -124,7 +124,7 @@ public class ProduccionService {
     private void enriquecerProduccion(Produccion produccion) {
         try {
             Map<?, ?> producto = productosWebClient.get()
-                    .uri("/productos/{id}", produccion.getProductoId())
+                    .uri("/api/v1/productos/{id}", produccion.getProductoId())
                     .retrieve()
                     .bodyToMono(Map.class)
                     .onErrorResume(e -> Mono.empty())
@@ -138,7 +138,7 @@ public class ProduccionService {
         if (produccion.getPedidoId() != null) {
             try {
                 Map<?, ?> pedido = pedidosWebClient.get()
-                        .uri("/pedidos/{id}", produccion.getPedidoId())
+                        .uri("/api/v1/pedidos/{id}", produccion.getPedidoId())
                         .retrieve()
                         .bodyToMono(Map.class)
                         .onErrorResume(e -> Mono.empty())
