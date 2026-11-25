@@ -25,6 +25,11 @@ public class VentaController {
     private VentaService service;
 
     @Operation(summary = "Listar todas las ventas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de ventas obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar ventas")
+    })
     @GetMapping
     public List<Venta> listar() {
         return service.listarTodas();
@@ -32,6 +37,8 @@ public class VentaController {
 
     @Operation(summary = "Buscar venta por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Venta encontrada"),
             @ApiResponse(responseCode = "404", description = "Venta no encontrada")
     })
@@ -43,6 +50,12 @@ public class VentaController {
     }
 
     @Operation(summary = "Listar ventas por cliente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ventas del cliente obtenidas correctamente"),
+            @ApiResponse(responseCode = "400", description = "Identificador de cliente inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar ventas")
+    })
     @GetMapping("/cliente/{clienteId}")
     public List<Venta> porCliente(@PathVariable Long clienteId) {
         return service.buscarPorCliente(clienteId);
@@ -50,13 +63,23 @@ public class VentaController {
 
     @Operation(summary = "Registrar una nueva venta",
                description = "El total se calcula automáticamente. Descuenta stock de productos.")
-    @ApiResponse(responseCode = "201", description = "Venta registrada exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Venta registrada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Venta> crear(@Valid @RequestBody Venta venta) {
         return new ResponseEntity<>(service.crearVenta(venta), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Resumen de ventas por método de pago")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Resumen obtenido correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar ventas")
+    })
     @GetMapping("/resumen/metodo-pago")
     public List<Map<String, Object>> resumenPorMetodoPago() {
         return service.resumenPorMetodoPago();

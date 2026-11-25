@@ -26,6 +26,11 @@ public class ReporteController {
     private ReporteService reporteService;
 
     @Operation(summary = "Listar todos los reportes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de reportes obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar reportes")
+    })
     @GetMapping
     public List<Reporte> listarTodos() {
         return reporteService.listarTodos();
@@ -33,6 +38,8 @@ public class ReporteController {
 
     @Operation(summary = "Buscar un reporte por su ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Reporte encontrado"),
             @ApiResponse(responseCode = "404", description = "Reporte no encontrado")
     })
@@ -44,7 +51,12 @@ public class ReporteController {
     }
 
     @Operation(summary = "Crear un nuevo reporte")
-    @ApiResponse(responseCode = "201", description = "Reporte creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Reporte creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Reporte> guardar(@Valid @RequestBody Reporte reporte) {
         return new ResponseEntity<>(reporteService.guardar(reporte), HttpStatus.CREATED);
@@ -52,6 +64,8 @@ public class ReporteController {
 
     @Operation(summary = "Eliminar un reporte")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Reporte eliminado"),
             @ApiResponse(responseCode = "404", description = "Reporte no encontrado")
     })
@@ -62,6 +76,12 @@ public class ReporteController {
     }
 
     @Operation(summary = "Generar reporte de ventas por periodo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reporte de ventas generado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Rango de fechas inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para generar reportes")
+    })
     @GetMapping("/generar/ventas")
     public ResponseEntity<Reporte> generarReporteVentas(
             @RequestParam(defaultValue = "#{T(java.time.LocalDate).now().minusDays(30)}") LocalDate desde,
@@ -70,24 +90,45 @@ public class ReporteController {
     }
 
     @Operation(summary = "Generar reporte de stock crítico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reporte de stock crítico generado correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para generar reportes")
+    })
     @GetMapping("/generar/stock-critico")
     public ResponseEntity<Reporte> generarReporteStockCritico() {
         return ResponseEntity.ok(reporteService.generarReporteStockCritico());
     }
 
     @Operation(summary = "Generar reporte de estado de pedidos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reporte de pedidos generado correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para generar reportes")
+    })
     @GetMapping("/generar/pedidos")
     public ResponseEntity<Reporte> generarReportePedidos() {
         return ResponseEntity.ok(reporteService.generarReportePedidos());
     }
 
     @Operation(summary = "Generar reporte de gastos por categoría")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reporte de gastos por categoría generado correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para generar reportes")
+    })
     @GetMapping("/generar/gastos-categoria")
     public ResponseEntity<Reporte> generarReporteGastosPorCategoria() {
         return ResponseEntity.ok(reporteService.generarReporteGastosPorCategoria());
     }
 
     @Operation(summary = "Generar reporte de utilidad por periodo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reporte de utilidad generado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Rango de fechas inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para generar reportes")
+    })
     @GetMapping("/generar/utilidad")
     public ResponseEntity<Reporte> generarReporteUtilidad(
             @RequestParam(defaultValue = "#{T(java.time.LocalDate).now().minusDays(30)}") LocalDate desde,

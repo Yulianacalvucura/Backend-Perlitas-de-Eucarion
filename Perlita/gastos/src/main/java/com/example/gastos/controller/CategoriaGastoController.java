@@ -24,6 +24,11 @@ public class CategoriaGastoController {
     private CategoriaGastoService service;
 
     @Operation(summary = "Listar todas las categorías de gasto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de categorías obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar categorías de gasto")
+    })
     @GetMapping
     public List<CategoriaGasto> listar() {
         return service.listarTodas();
@@ -31,6 +36,8 @@ public class CategoriaGastoController {
 
     @Operation(summary = "Buscar categoría de gasto por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Categoría encontrada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
@@ -42,7 +49,12 @@ public class CategoriaGastoController {
     }
 
     @Operation(summary = "Crear una nueva categoría de gasto")
-    @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<CategoriaGasto> crear(@Valid @RequestBody CategoriaGasto categoria) {
         return new ResponseEntity<>(service.guardar(categoria), HttpStatus.CREATED);
@@ -50,6 +62,9 @@ public class CategoriaGastoController {
 
     @Operation(summary = "Actualizar una categoría de gasto")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Categoría actualizada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
@@ -64,6 +79,8 @@ public class CategoriaGastoController {
 
     @Operation(summary = "Eliminar una categoría de gasto")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Categoría eliminada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })

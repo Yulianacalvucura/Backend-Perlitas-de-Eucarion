@@ -118,7 +118,10 @@ eureka:
     enabled: false
 
 springdoc:
+  api-docs:
+    path: /v3/api-docs
   swagger-ui:
+    path: /swagger-ui.html
     urls:
       - name: Servicio Materiales
         url: /api/v1/materiales/v3/api-docs

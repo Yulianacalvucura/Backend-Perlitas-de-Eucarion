@@ -23,12 +23,22 @@ public class ProveedorController {
     private ProveedorService service;
 
     @Operation(summary = "Listar todos los proveedores")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de proveedores obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar proveedores")
+    })
     @GetMapping
     public List<Proveedor> listar() {
         return service.listarTodos();
     }
 
     @Operation(summary = "Listar proveedores activos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Proveedores activos obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar proveedores")
+    })
     @GetMapping("/activos")
     public List<Proveedor> listarActivos() {
         return service.listarActivos();
@@ -36,6 +46,8 @@ public class ProveedorController {
 
     @Operation(summary = "Buscar proveedor por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Proveedor encontrado"),
             @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
     })
@@ -45,7 +57,12 @@ public class ProveedorController {
     }
 
     @Operation(summary = "Crear un nuevo proveedor")
-    @ApiResponse(responseCode = "201", description = "Proveedor creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Proveedor creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Proveedor> crear(@Valid @RequestBody Proveedor proveedor) {
         return new ResponseEntity<>(service.guardar(proveedor), HttpStatus.CREATED);
@@ -53,6 +70,9 @@ public class ProveedorController {
 
     @Operation(summary = "Actualizar un proveedor existente")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Proveedor actualizado"),
             @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
     })
@@ -65,6 +85,8 @@ public class ProveedorController {
 
     @Operation(summary = "Eliminar un proveedor")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Proveedor eliminado"),
             @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
     })
@@ -77,6 +99,9 @@ public class ProveedorController {
 
     @Operation(summary = "Desactivar un proveedor")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Proveedor desactivado"),
             @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
     })
@@ -89,6 +114,9 @@ public class ProveedorController {
 
     @Operation(summary = "Activar un proveedor")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Proveedor activado"),
             @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
     })

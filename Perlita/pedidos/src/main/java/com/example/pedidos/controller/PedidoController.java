@@ -24,6 +24,11 @@ public class PedidoController {
     private PedidoService service;
 
     @Operation(summary = "Listar todos los pedidos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de pedidos obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar pedidos")
+    })
     @GetMapping
     public List<Pedido> listar() {
         return service.listarTodos();
@@ -31,6 +36,8 @@ public class PedidoController {
 
     @Operation(summary = "Buscar pedido por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Pedido encontrado"),
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
@@ -42,7 +49,12 @@ public class PedidoController {
     }
 
     @Operation(summary = "Crear un nuevo pedido")
-    @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Pedido> crear(@Valid @RequestBody Pedido pedido) {
         return new ResponseEntity<>(service.guardar(pedido), HttpStatus.CREATED);
@@ -50,6 +62,9 @@ public class PedidoController {
 
     @Operation(summary = "Actualizar un pedido existente")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Pedido actualizado"),
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
@@ -63,6 +78,8 @@ public class PedidoController {
 
     @Operation(summary = "Eliminar un pedido")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Pedido eliminado"),
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
@@ -74,7 +91,13 @@ public class PedidoController {
     }
 
     @Operation(summary = "Listar pedidos por estado",
-               description = "Estados válidos: pendiente, en_proceso, completado")
+               description = "Estados válidos: pendiente, en_fabricacion, listo_para_entrega, entregado, cancelado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedidos del estado indicado obtenidos correctamente"),
+            @ApiResponse(responseCode = "400", description = "Estado inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar pedidos")
+    })
     @GetMapping("/estado/{estado}")
     public List<Pedido> listarPorEstado(@PathVariable String estado) {
         return service.listarPorEstado(estado);
@@ -83,6 +106,8 @@ public class PedidoController {
     @Operation(summary = "Cambiar estado de un pedido",
                description = "Los estados avanzan en orden: pendiente -> en_proceso -> completado")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Estado actualizado"),
             @ApiResponse(responseCode = "400", description = "Transición de estado inválida"),
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
@@ -95,6 +120,12 @@ public class PedidoController {
     }
 
     @Operation(summary = "Listar pedidos por cliente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedidos del cliente obtenidos correctamente"),
+            @ApiResponse(responseCode = "400", description = "Identificador de cliente inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar pedidos")
+    })
     @GetMapping("/cliente/{clienteId}")
     public List<Pedido> listarPorCliente(@PathVariable Long clienteId) {
         return service.listarPorCliente(clienteId);
