@@ -16,7 +16,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/categorias-gasto")
+@RequestMapping("/api/v1/categorias-gasto")
 @Tag(name = "Categorías de Gasto", description = "Gestión de categorías para clasificar gastos")
 public class CategoriaGastoController {
 

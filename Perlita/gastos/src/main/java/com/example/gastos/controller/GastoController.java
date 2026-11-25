@@ -16,7 +16,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/gastos")
+@RequestMapping("/api/v1/gastos")
 @Tag(name = "Gastos", description = "Gestión de gastos del negocio")
 public class GastoController {
 

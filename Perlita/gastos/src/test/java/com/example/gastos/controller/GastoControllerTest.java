@@ -37,7 +37,7 @@ class GastoControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Gasto()));
 
-        mockMvc.perform(get("/gastos"))
+        mockMvc.perform(get("/api/v1/gastos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -50,7 +50,7 @@ class GastoControllerTest {
         g.setMonto(100.0);
         when(service.buscarPorId(1L)).thenReturn(Optional.of(g));
 
-        mockMvc.perform(get("/gastos/1"))
+        mockMvc.perform(get("/api/v1/gastos/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.descripcion").value("Test"));
@@ -60,7 +60,7 @@ class GastoControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/gastos/99"))
+        mockMvc.perform(get("/api/v1/gastos/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -81,7 +81,7 @@ class GastoControllerTest {
 
         when(service.guardar(any(Gasto.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/gastos")
+        mockMvc.perform(post("/api/v1/gastos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -99,7 +99,7 @@ class GastoControllerTest {
         update.setCategoriaId(1L);
         when(service.guardar(any(Gasto.class))).thenReturn(update);
 
-        mockMvc.perform(put("/gastos/1")
+        mockMvc.perform(put("/api/v1/gastos/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -110,7 +110,7 @@ class GastoControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Gasto()));
 
-        mockMvc.perform(delete("/gastos/1"))
+        mockMvc.perform(delete("/api/v1/gastos/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);

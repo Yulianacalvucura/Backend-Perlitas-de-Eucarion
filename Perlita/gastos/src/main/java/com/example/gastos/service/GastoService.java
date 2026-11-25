@@ -42,7 +42,7 @@ public class GastoService {
     public Gasto guardar(Gasto gasto) {
         if (gasto.getProveedorId() != null) {
             Boolean existe = proveedoresWebClient.get()
-                    .uri("/proveedores/{id}", gasto.getProveedorId())
+                    .uri("/api/v1/proveedores/{id}", gasto.getProveedorId())
                     .retrieve()
                     .bodyToMono(Object.class)
                     .map(r -> true)

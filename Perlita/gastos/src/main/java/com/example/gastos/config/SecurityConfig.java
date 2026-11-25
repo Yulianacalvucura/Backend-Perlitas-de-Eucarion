@@ -17,14 +17,14 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/gastos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.PUT, "/gastos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/gastos/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/gastos/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/categorias-gasto/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.PUT, "/categorias-gasto/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/categorias-gasto/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/categorias-gasto/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/gastos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/gastos/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/v1/gastos/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/gastos/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/categorias-gasto/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/categorias-gasto/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/v1/categorias-gasto/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/categorias-gasto/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/gastos/v3/api-docs/",
                     "/api/v1/gastos/v3/api-docs/**",
