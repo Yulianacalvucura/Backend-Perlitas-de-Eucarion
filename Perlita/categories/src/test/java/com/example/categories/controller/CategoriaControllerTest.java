@@ -38,7 +38,7 @@ class CategoriaControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodos()).thenReturn(List.of(new Categoria()));
 
-        mockMvc.perform(get("/categorias"))
+        mockMvc.perform(get("/api/v1/categorias"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -49,7 +49,7 @@ class CategoriaControllerTest {
         c.setActivo(1);
         when(service.listarActivas(1)).thenReturn(List.of(c));
 
-        mockMvc.perform(get("/categorias/activas"))
+        mockMvc.perform(get("/api/v1/categorias/activas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].activo").value(1));
     }
@@ -61,7 +61,7 @@ class CategoriaControllerTest {
         c.setNombre("Test");
         when(service.buscarPorId(1L)).thenReturn(Optional.of(c));
 
-        mockMvc.perform(get("/categorias/1"))
+        mockMvc.perform(get("/api/v1/categorias/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nombre").value("Test"));
@@ -71,7 +71,7 @@ class CategoriaControllerTest {
     void buscarPorId_whenNotExists_shouldReturn404() throws Exception {
         when(service.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/categorias/99"))
+        mockMvc.perform(get("/api/v1/categorias/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -85,7 +85,7 @@ class CategoriaControllerTest {
         saved.setNombre("Nueva Categoría");
         when(service.guardar(any(Categoria.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/categorias")
+        mockMvc.perform(post("/api/v1/categorias")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -108,7 +108,7 @@ class CategoriaControllerTest {
         input.setNombre("Actualizada");
         input.setDescripcion("Desc");
 
-        mockMvc.perform(put("/categorias/1")
+        mockMvc.perform(put("/api/v1/categorias/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -119,7 +119,7 @@ class CategoriaControllerTest {
     void eliminar_whenExists_shouldReturn204() throws Exception {
         when(service.buscarPorId(1L)).thenReturn(Optional.of(new Categoria()));
 
-        mockMvc.perform(delete("/categorias/1"))
+        mockMvc.perform(delete("/api/v1/categorias/1"))
                 .andExpect(status().isNoContent());
 
         verify(service).eliminar(1L);
@@ -129,7 +129,7 @@ class CategoriaControllerTest {
     void obtenerProductosDe_shouldReturn200() throws Exception {
         when(service.obtenerProductosDe(1L)).thenReturn(List.of(new ProductoCategoria()));
 
-        mockMvc.perform(get("/categorias/obtenerProducto/1"))
+        mockMvc.perform(get("/api/v1/categorias/obtenerProducto/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -144,7 +144,7 @@ class CategoriaControllerTest {
         when(service.reasignarProductos(1L, 2L))
                 .thenReturn(ResponseEntity.ok((Object) respuesta));
 
-        mockMvc.perform(patch("/categorias/reasignar")
+        mockMvc.perform(patch("/api/v1/categorias/reasignar")
                         .param("origenId", "1")
                         .param("destinoId", "2"))
                 .andExpect(status().isOk())
@@ -156,7 +156,7 @@ class CategoriaControllerTest {
         when(service.reasignarProductos(1L, 99L))
                 .thenReturn(ResponseEntity.badRequest().body((Object) "Una o ambas categorías no existen."));
 
-        mockMvc.perform(patch("/categorias/reasignar")
+        mockMvc.perform(patch("/api/v1/categorias/reasignar")
                         .param("origenId", "1")
                         .param("destinoId", "99"))
                 .andExpect(status().isBadRequest());

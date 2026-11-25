@@ -17,10 +17,10 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/categorias/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/categorias/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/categorias/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/categorias/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/categorias/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/v1/categorias/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/categorias/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/categorias/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/categorias/v3/api-docs/",
                     "/api/v1/categorias/v3/api-docs/**",
