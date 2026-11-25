@@ -1,6 +1,9 @@
 package com.example.service_auth.service;
 
 import com.example.service_auth.dto.AuthRequest;
+import com.example.service_auth.exception.CredencialesInvalidasException;
+import com.example.service_auth.exception.RolInvalidoException;
+import com.example.service_auth.exception.UsuarioDuplicadoException;
 import com.example.service_auth.model.Rol;
 import com.example.service_auth.model.Usuario;
 import com.example.service_auth.repository.RolRepository;
@@ -41,7 +44,7 @@ class AuthServiceTest {
     void registrar_whenUserDoesNotExist_shouldRegister() {
         AuthRequest request = new AuthRequest();
         request.setNombreUsuario("nuevo");
-        request.setContrasena("pass123");
+        request.setContrasena("pass12345");
         request.setCorreo("nuevo@test.cl");
         request.setRoles(Set.of("ADMIN"));
 
@@ -51,8 +54,7 @@ class AuthServiceTest {
         rolAdmin.setId(1L);
         rolAdmin.setNombreRol("ADMIN");
         when(rolRepository.findByNombreRol("ADMIN")).thenReturn(Optional.of(rolAdmin));
-
-        when(passwordEncoder.encode("pass123")).thenReturn("encoded");
+        when(passwordEncoder.encode("pass12345")).thenReturn("encoded");
 
         String result = authService.registrar(request);
 
@@ -61,21 +63,21 @@ class AuthServiceTest {
     }
 
     @Test
-    void registrar_whenUserAlreadyExists_shouldThrow() {
+    void registrar_whenUserAlreadyExists_shouldThrowConflicto() {
         AuthRequest request = new AuthRequest();
         request.setNombreUsuario("existente");
 
         when(usuarioRepository.findByNombreUsuario("existente")).thenReturn(Optional.of(new Usuario()));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.registrar(request));
-        assertTrue(ex.getMessage().contains("ya existe"));
+        assertThrows(UsuarioDuplicadoException.class, () -> authService.registrar(request));
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test
-    void registrar_whenDefaultRoleVENDEDOR_shouldAssignDefault() {
+    void registrar_whenDefaultRole_shouldAssignVendedor() {
         AuthRequest request = new AuthRequest();
         request.setNombreUsuario("test");
-        request.setContrasena("pass");
+        request.setContrasena("pass12345");
         request.setCorreo("test@test.cl");
         request.setRoles(null);
 
@@ -85,11 +87,26 @@ class AuthServiceTest {
         rolVendedor.setId(2L);
         rolVendedor.setNombreRol("VENDEDOR");
         when(rolRepository.findByNombreRol("VENDEDOR")).thenReturn(Optional.of(rolVendedor));
-
-        when(passwordEncoder.encode("pass")).thenReturn("encoded");
+        when(passwordEncoder.encode("pass12345")).thenReturn("encoded");
 
         authService.registrar(request);
+
         verify(usuarioRepository).save(any(Usuario.class));
+    }
+
+    @Test
+    void registrar_whenRoleCliente_shouldThrowRolInvalido() {
+        AuthRequest request = new AuthRequest();
+        request.setNombreUsuario("cliente");
+        request.setContrasena("pass12345");
+        request.setCorreo("cliente@test.cl");
+        request.setRoles(Set.of("CLIENTE"));
+
+        when(usuarioRepository.findByNombreUsuario("cliente")).thenReturn(Optional.empty());
+
+        RolInvalidoException ex = assertThrows(RolInvalidoException.class, () -> authService.registrar(request));
+        assertTrue(ex.getMessage().contains("Solo se aceptan ADMIN y VENDEDOR"));
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test
@@ -103,17 +120,17 @@ class AuthServiceTest {
         usuario.setRoles(Set.of(rol));
 
         when(usuarioRepository.findByNombreUsuario("admin")).thenReturn(Optional.of(usuario));
-        when(passwordEncoder.matches("pass", "encodedPass")).thenReturn(true);
+        when(passwordEncoder.matches("pass12345", "encodedPass")).thenReturn(true);
         when(jwtService.generarToken("admin", List.of("ADMIN"))).thenReturn("token123");
 
-        String token = authService.login("admin", "pass");
+        String token = authService.login("admin", "pass12345");
 
         assertEquals("token123", token);
         verify(jwtService).generarToken("admin", List.of("ADMIN"));
     }
 
     @Test
-    void login_withInvalidPassword_shouldThrow() {
+    void login_withInvalidPassword_shouldThrowNoAutorizado() {
         Usuario usuario = new Usuario();
         usuario.setNombreUsuario("admin");
         usuario.setContrasena("encodedPass");
@@ -121,15 +138,13 @@ class AuthServiceTest {
         when(usuarioRepository.findByNombreUsuario("admin")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("wrong", "encodedPass")).thenReturn(false);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.login("admin", "wrong"));
-        assertTrue(ex.getMessage().contains("Credenciales inv\u00e1lidas"));
+        assertThrows(CredencialesInvalidasException.class, () -> authService.login("admin", "wrong"));
     }
 
     @Test
-    void login_withNonExistentUser_shouldThrow() {
+    void login_withNonExistentUser_shouldThrowNoAutorizado() {
         when(usuarioRepository.findByNombreUsuario("ghost")).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.login("ghost", "pass"));
-        assertTrue(ex.getMessage().contains("Credenciales inv\u00e1lidas"));
+        assertThrows(CredencialesInvalidasException.class, () -> authService.login("ghost", "pass12345"));
     }
 }
