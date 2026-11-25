@@ -61,11 +61,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             String path = request.getRequestURI();
             String method = request.getMethod();
 
-            if (roles.contains("VENDEDOR") && method.equals("DELETE")) {
-                onError(response, "Lo sentimos, tu cuenta de VENDEDOR no tiene permisos para eliminar registros.", HttpServletResponse.SC_FORBIDDEN);
-                return;
-            }
-
             String rolesStr = String.join(",", roles);
 
             HttpServletRequestWrapperWithHeaders mutada = new HttpServletRequestWrapperWithHeaders(request);

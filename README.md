@@ -413,12 +413,23 @@ Estos problemas existen actualmente en el código y están pendientes de correcc
 
 ## Roles y permisos
 
-| Rol | Permisos |
-|---|---|
-| ADMIN | Acceso completo a todos los endpoints |
-| VENDEDOR | GET, POST, PUT - no puede eliminar recursos |
+Matriz de autorizaci?n. **Criterio ?nico**: la fuente de verdad es el `SecurityConfig` de cada microservicio; el gateway valida JWT y no contradice la matriz (no aplica reglas de rol por recurso, salvo autenticaci?n/login p?blico).
 
-Solo ADMIN puede registrar usuarios. No existe el rol CLIENTE.
+| Recurso | ADMIN | VENDEDOR |
+|---|---|---|
+| Ventas (`/ventas`), pedidos (`/pedidos`), pedido-materiales (`/pedido-materiales`) | Todo (GET, POST, PUT, PATCH, DELETE) | GET, POST, PUT |
+| Producci?n (`/api/v1/produccion/**`) | Todo | GET, POST, PUT, PATCH (incluye cambio de estado) |
+| Bloqueos (`/api/v1/produccion/bloqueos/**`) | Todo | Solo GET |
+| Productos (`/productos`), materiales (`/materiales`), categor?as (`/categorias`), galer?a (`/galeria`) | Todo | GET, PUT |
+| Proveedores (`/proveedores`), proveedor-materiales (`/proveedor-materiales`), gastos (`/gastos`), categor?as-gasto (`/categorias-gasto`), reportes (`/reportes`) | Todo | Sin acceso |
+| Auth (`/auth/registrar`, gesti?n de usuarios) | Solo ADMIN | Sin acceso |
+| Login (`POST /auth/login`) | P?blico | P?blico |
+
+Reglas generales:
+- `DELETE`: siempre solo `ADMIN`.
+- Falta autenticaci?n/token inv?lido: `401 Unauthorized` (formato JSON del proyecto).
+- Autenticado sin permiso: `403 Forbidden` (`CustomAccessDeniedHandler`).
+- No existe el rol `CLIENTE`.
 
 ---
 
