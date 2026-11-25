@@ -17,7 +17,7 @@ import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/ventas")
+@RequestMapping("/api/v1/ventas")
 @Tag(name = "Ventas", description = "Gestión de ventas y transacciones")
 public class VentaController {
 

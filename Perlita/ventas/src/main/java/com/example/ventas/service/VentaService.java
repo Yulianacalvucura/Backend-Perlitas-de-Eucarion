@@ -4,6 +4,7 @@ import com.example.ventas.model.Venta;
 import com.example.ventas.repository.VentaProductoRepository;
 import com.example.ventas.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDate;
@@ -23,7 +24,8 @@ public class VentaService {
     private VentaProductoRepository ventaProductoRepository;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    @Qualifier("productosWebClient")
+    private WebClient productosWebClient;
 
     public List<Venta> listarTodas() {
         return ventaRepository.findAll();
@@ -67,9 +69,9 @@ public class VentaService {
 
         venta.getProductos().forEach(vp -> {
             try {
-                Object producto = webClientBuilder.build()
+                Object producto = productosWebClient
                         .get()
-                        .uri("http://localhost:8082/productos/" + vp.getProductoId())
+                        .uri("/api/v1/productos/{id}", vp.getProductoId())
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();

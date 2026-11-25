@@ -30,7 +30,7 @@ class VentaServiceTest {
     private VentaProductoRepository ventaProductoRepository;
 
     @Mock
-    private WebClient.Builder webClientBuilder;
+    private WebClient productosWebClient;
 
     @InjectMocks
     private VentaService service;
@@ -87,9 +87,11 @@ class VentaServiceTest {
         Venta venta = new Venta();
         venta.setClienteId(1L);
         VentaProducto vp1 = new VentaProducto();
+        vp1.setProductoId(11L);
         vp1.setPrecioUnitario(100.0);
         vp1.setCantidad(2);
         VentaProducto vp2 = new VentaProducto();
+        vp2.setProductoId(12L);
         vp2.setPrecioUnitario(50.0);
         vp2.setCantidad(3);
         venta.setProductos(List.of(vp1, vp2));
@@ -101,14 +103,13 @@ class VentaServiceTest {
         guardada.setTotal(350.0);
         guardada.setProductos(List.of(vp1, vp2));
 
-        WebClient webClient = mock(WebClient.class);
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
         WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
+        when(productosWebClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/api/v1/productos/{id}", 11L)).thenReturn(requestHeadersSpec);
+        when(requestHeadersUriSpec.uri("/api/v1/productos/{id}", 12L)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("datos-producto"));
         when(ventaRepository.save(any(Venta.class))).thenReturn(guardada);
@@ -119,6 +120,8 @@ class VentaServiceTest {
         assertEquals(350.0, actual.getTotal());
         verify(ventaRepository).save(any(Venta.class));
         verify(ventaProductoRepository).saveAll(anyList());
+        verify(requestHeadersUriSpec).uri("/api/v1/productos/{id}", 11L);
+        verify(requestHeadersUriSpec).uri("/api/v1/productos/{id}", 12L);
     }
 
     @Test
@@ -145,14 +148,12 @@ class VentaServiceTest {
         venta.setProductos(List.of(vp));
         when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
 
-        WebClient webClient = mock(WebClient.class);
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
         WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
+        when(productosWebClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/api/v1/productos/{id}", 10L)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("datos"));
 
@@ -160,6 +161,7 @@ class VentaServiceTest {
 
         assertNotNull(actual);
         assertEquals("datos", actual.getProductos().get(0).getDatosProducto());
+        verify(requestHeadersUriSpec).uri("/api/v1/productos/{id}", 10L);
     }
 
     @Test

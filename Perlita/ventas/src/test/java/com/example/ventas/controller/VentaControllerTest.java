@@ -37,7 +37,7 @@ class VentaControllerTest {
     void listar_shouldReturn200() throws Exception {
         when(service.listarTodas()).thenReturn(List.of(new Venta()));
 
-        mockMvc.perform(get("/ventas"))
+        mockMvc.perform(get("/api/v1/ventas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -50,7 +50,7 @@ class VentaControllerTest {
         v.setFecha(LocalDate.now());
         when(service.obtenerVentaCompleta(1L)).thenReturn(v);
 
-        mockMvc.perform(get("/ventas/1"))
+        mockMvc.perform(get("/api/v1/ventas/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
@@ -59,7 +59,7 @@ class VentaControllerTest {
     void obtenerCompleta_whenNotExists_shouldReturn404() throws Exception {
         when(service.obtenerVentaCompleta(99L)).thenReturn(null);
 
-        mockMvc.perform(get("/ventas/99"))
+        mockMvc.perform(get("/api/v1/ventas/99"))
                 .andExpect(status().isNotFound());
     }
 
@@ -67,7 +67,7 @@ class VentaControllerTest {
     void porCliente_shouldReturn200() throws Exception {
         when(service.buscarPorCliente(5L)).thenReturn(List.of(new Venta()));
 
-        mockMvc.perform(get("/ventas/cliente/5"))
+        mockMvc.perform(get("/api/v1/ventas/cliente/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -78,6 +78,7 @@ class VentaControllerTest {
         input.setClienteId(1L);
         input.setMetodoPago("efectivo");
         input.setTotal(200.0);
+        input.setFecha(LocalDate.now());
 
         Venta saved = new Venta();
         saved.setId(1L);
@@ -88,7 +89,7 @@ class VentaControllerTest {
 
         when(service.crearVenta(any(Venta.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/ventas")
+        mockMvc.perform(post("/api/v1/ventas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -102,7 +103,7 @@ class VentaControllerTest {
                 Map.of("metodoPago", "efectivo", "cantidadVentas", 5L, "totalRecaudado", 1500.0)
         ));
 
-        mockMvc.perform(get("/ventas/resumen/metodo-pago"))
+        mockMvc.perform(get("/api/v1/ventas/resumen/metodo-pago"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].metodoPago").value("efectivo"));
     }
