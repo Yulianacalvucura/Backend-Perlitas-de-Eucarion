@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.example.categories.exception.ResourceNotFoundException;
 
 import com.example.categories.model.Categoria;
 import com.example.categories.model.ProductoCategoria;
@@ -46,6 +48,26 @@ public class CategoriaService {
 
     public List<ProductoCategoria> obtenerProductosDe(Long categoriaId) {
         return productoCategoriaRepository.findByCategoria_Id(categoriaId);
+    }
+
+    public List<ProductoCategoria> listarRelaciones() {
+        return productoCategoriaRepository.findAll();
+    }
+
+    @Transactional
+    public void asignarCategoria(Long productoId, Long categoriaId) {
+        Categoria categoria = categoriaRepository.findById(categoriaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + categoriaId));
+        productoCategoriaRepository.deleteByProductoId(productoId);
+        ProductoCategoria relacion = new ProductoCategoria();
+        relacion.setProductoId(productoId);
+        relacion.setCategoria(categoria);
+        productoCategoriaRepository.save(relacion);
+    }
+
+    @Transactional
+    public void eliminarRelacion(Long productoId) {
+        productoCategoriaRepository.deleteByProductoId(productoId);
     }
 
     public ResponseEntity<Object> reasignarProductos(Long origenId, Long destinoId) {

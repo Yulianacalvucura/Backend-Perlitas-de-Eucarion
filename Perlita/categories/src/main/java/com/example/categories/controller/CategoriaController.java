@@ -119,6 +119,26 @@ public class CategoriaController {
         return service.obtenerProductosDe(categoriaId);
     }
 
+    @Operation(summary = "Listar relaciones entre productos y categorías")
+    @GetMapping("/relaciones")
+    public List<ProductoCategoria> listarRelaciones() {
+        return service.listarRelaciones();
+    }
+
+    @Operation(summary = "Asignar una categoría a un producto")
+    @PutMapping("/relaciones/{productoId}")
+    public ResponseEntity<Void> asignarCategoria(@PathVariable Long productoId, @RequestParam Long categoriaId) {
+        service.asignarCategoria(productoId, categoriaId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Eliminar la relación de un producto")
+    @DeleteMapping("/relaciones/{productoId}")
+    public ResponseEntity<Void> eliminarRelacion(@PathVariable Long productoId) {
+        service.eliminarRelacion(productoId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Reasignar productos entre categorías",
                description = "Transfiere todos los productos de la categoría origen a la categoría destino")
     @ApiResponses(value = {

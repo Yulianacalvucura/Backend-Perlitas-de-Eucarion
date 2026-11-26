@@ -18,6 +18,8 @@ public interface ProductoCategoriaRepository extends JpaRepository<ProductoCateg
 {
     List<ProductoCategoria> findByCategoria_Id(Long categoriaId);
 
+    void deleteByProductoId(Long productoId);
+
     @Modifying
     @Transactional
     @Query("UPDATE ProductoCategoria pc SET pc.categoria.id = :destino WHERE pc.categoria.id = :origen")

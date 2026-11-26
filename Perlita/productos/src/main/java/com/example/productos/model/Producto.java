@@ -29,6 +29,9 @@ public class Producto {
     @Column(name = "precio_venta", nullable = false)
     private Double precioVenta;
 
+    @Column(name = "precio_antes")
+    private Double precioAntes;
+
     @Column(name = "stock_disponible", nullable = false)
     private Integer stockDisponible = 0;
 
