@@ -151,6 +151,78 @@ class ReporteServiceTest {
         verify(reporteRepository, never()).save(any(Reporte.class));
     }
 
+    @Test
+    void generarReporteVentas_sinFechas_debeUsarUltimos30DiasYGuardarParametros() throws Exception {
+        // Arrange
+        stubLista(ventasWebClient, "/ventas", Mono.just(List.of()));
+        stubLista(productosWebClient, "/productos", Mono.just(List.of()));
+        when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Reporte actual = service.generarReporteVentas(null, null);
+
+        // Assert
+        JsonNode parametros = objectMapper.readTree(actual.getParametros());
+        assertEquals(LocalDate.now().minusDays(30).toString(), parametros.get("desde").asText());
+        assertEquals(LocalDate.now().toString(), parametros.get("hasta").asText());
+        JsonNode json = objectMapper.readTree(actual.getResultadoJson());
+        assertEquals(0, json.get("cantidadVentas").asInt());
+        assertEquals(0.0, json.get("totalVentas").asDouble());
+    }
+
+    @Test
+    void generarReporteStockCritico_debeContarMaterialesConStockBajo() throws Exception {
+        // Arrange
+        stubLista(materialesWebClient, "/materiales/stock-bajo", Mono.just(List.of(
+                Map.of("id", 1), Map.of("id", 2), Map.of("id", 3))));
+        when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Reporte actual = service.generarReporteStockCritico();
+
+        // Assert
+        assertEquals("stock_critico", actual.getTipo());
+        JsonNode json = objectMapper.readTree(actual.getResultadoJson());
+        assertEquals(3, json.get("materialesStockBajo").asInt());
+    }
+
+    @Test
+    void generarReporteVentas_cuandoVentasResponde404_debeGenerarReporteVacio() throws Exception {
+        // Arrange
+        stubLista(ventasWebClient, "/ventas", Mono.error(
+                WebClientResponseException.create(404, "Not Found", null, null, null)));
+        stubLista(productosWebClient, "/productos", Mono.just(List.of()));
+        when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Reporte actual = service.generarReporteVentas(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30));
+
+        // Assert
+        JsonNode json = objectMapper.readTree(actual.getResultadoJson());
+        assertEquals(0, json.get("cantidadVentas").asInt());
+        assertEquals(0.0, json.get("totalVentas").asDouble());
+        verify(reporteRepository).save(any(Reporte.class));
+    }
+
+    @Test
+    void generarReporteUtilidad_cuandoGastosFallan_debePropagarServicioNoDisponible() {
+        // Arrange
+        stubLista(ventasWebClient, "/ventas", Mono.just(List.of()));
+        stubLista(gastosWebClient, "/gastos", Mono.error(
+                WebClientResponseException.create(503, "Servicio no disponible", null, null, null)));
+
+        // Act
+        ServicioNoDisponibleException excepcion = assertThrows(
+                ServicioNoDisponibleException.class,
+                () -> service.generarReporteUtilidad(
+                        LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)));
+
+        // Assert
+        assertTrue(excepcion.getMessage().contains("Servicio de gastos no disponible"));
+        verify(reporteRepository, never()).save(any(Reporte.class));
+    }
+
     private Map<String, Object> venta(Long id, String fecha, String metodoPago, Double total) {
         return Map.of("id", id, "fecha", fecha, "metodoPago", metodoPago, "total", total);
     }

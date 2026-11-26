@@ -1,6 +1,7 @@
 package com.example.service_calendario.service;
 
 import com.example.service_calendario.exception.ResourceNotFoundException;
+import com.example.service_calendario.model.Bloqueo;
 import com.example.service_calendario.model.Produccion;
 import com.example.service_calendario.repository.BloqueoRepository;
 import com.example.service_calendario.repository.ProduccionRepository;
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -180,6 +182,116 @@ class ProduccionServiceTest {
         // Act + Assert
         assertThrows(ResourceNotFoundException.class, () -> service.buscarPorId(99));
         verify(produccionRepository).findById(99);
+    }
+
+    @Test
+    void crear_conFechaFinEstimadaAnteriorAlInicio_debeLanzarIllegalArgumentExceptionSinGuardar() {
+        // Arrange
+        Produccion produccion = produccion(1, 7, "programado");
+        produccion.setFechaFinEstimada(LocalDate.of(2026, 6, 30));
+
+        // Act
+        IllegalArgumentException excepcion = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.crear(produccion));
+
+        // Assert
+        assertEquals("La fecha fin estimada no puede ser anterior a la fecha de inicio",
+                excepcion.getMessage());
+        verify(produccionRepository, never()).save(any(Produccion.class));
+        verify(bloqueoRepository, never()).findByFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                any(), any());
+    }
+
+    @Test
+    void crear_conBloqueoEnElRango_debeLanzarIllegalArgumentExceptionSinGuardar() {
+        // Arrange
+        Produccion produccion = produccion(1, 7, "programado");
+        Bloqueo bloqueo = new Bloqueo();
+        bloqueo.setFechaInicio(LocalDate.of(2026, 7, 5));
+        bloqueo.setFechaFin(LocalDate.of(2026, 7, 6));
+        bloqueo.setMotivo("Mantenimiento");
+        when(bloqueoRepository.findByFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                LocalDate.of(2026, 7, 10), LocalDate.of(2026, 7, 1))).thenReturn(List.of(bloqueo));
+
+        // Act
+        IllegalArgumentException excepcion = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.crear(produccion));
+
+        // Assert
+        assertTrue(excepcion.getMessage().contains("existe un bloqueo en ese rango de fechas"));
+        assertTrue(excepcion.getMessage().contains("Mantenimiento"));
+        verify(produccionRepository, never()).save(any(Produccion.class));
+    }
+
+    @Test
+    void crear_sinBloqueoEnElRango_debeGuardarProduccion() {
+        // Arrange
+        Produccion produccion = produccion(1, 7, "programado");
+        when(bloqueoRepository.findByFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                LocalDate.of(2026, 7, 10), LocalDate.of(2026, 7, 1))).thenReturn(List.of());
+        when(produccionRepository.save(produccion)).thenReturn(produccion);
+
+        // Act
+        Produccion guardada = service.crear(produccion);
+
+        // Assert
+        assertSame(produccion, guardada);
+        verify(produccionRepository).save(produccion);
+    }
+
+    @Test
+    void cambiarEstado_deProgramadoAEnProceso_debeGuardarSinAsignarFechaFinRealNiNotificar() {
+        // Arrange
+        Produccion produccion = produccion(1, 7, "programado");
+        when(produccionRepository.findById(1)).thenReturn(Optional.of(produccion));
+        when(produccionRepository.save(any(Produccion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Produccion actual = service.cambiarEstado(1, "en_proceso");
+
+        // Assert
+        assertEquals("en_proceso", actual.getEstado());
+        assertNull(actual.getFechaFinReal());
+        verify(produccionRepository).save(any(Produccion.class));
+        verify(pedidosWebClient, never()).get();
+        verify(pedidosWebClient, never()).patch();
+    }
+
+    @Test
+    void cambiarEstado_deEnProcesoACancelado_debeGuardarSinNotificarPedido() {
+        // Arrange
+        Produccion produccion = produccion(1, 7, "en_proceso");
+        when(produccionRepository.findById(1)).thenReturn(Optional.of(produccion));
+        when(produccionRepository.save(any(Produccion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Produccion actual = service.cambiarEstado(1, "cancelado");
+
+        // Assert
+        assertEquals("cancelado", actual.getEstado());
+        assertNull(actual.getFechaFinReal());
+        verify(produccionRepository).save(any(Produccion.class));
+        verify(pedidosWebClient, never()).get();
+        verify(pedidosWebClient, never()).patch();
+    }
+
+    @Test
+    void cambiarEstado_desdeCancelado_debeLanzarIllegalArgumentExceptionSinGuardarNiNotificar() {
+        // Arrange
+        when(produccionRepository.findById(1)).thenReturn(Optional.of(produccion(1, 7, "cancelado")));
+
+        // Act
+        IllegalArgumentException excepcion = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.cambiarEstado(1, "programado"));
+
+        // Assert
+        assertTrue(excepcion.getMessage().contains("Transición inválida: cancelado → programado"));
+        verify(produccionRepository, never()).save(any(Produccion.class));
+        verify(pedidosWebClient, never()).get();
+        verify(pedidosWebClient, never()).patch();
     }
 
     private void stubObtenerPedido(Map<String, Object> pedido) {

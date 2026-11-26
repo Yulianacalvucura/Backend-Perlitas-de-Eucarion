@@ -6,10 +6,10 @@ import com.example.service_auth.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -38,16 +38,18 @@ class AutenticacionControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private PasswordEncoder passwordEncoder;
 
     @Test
-    void login_shouldBePublic() throws Exception {
+    void login_sinAutenticacion_debeSerPublicoYResponder200() throws Exception {
+        // Arrange
         when(authService.login("admin", "admin123")).thenReturn("token123");
 
+        // Act + Assert
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(LOGIN_JSON))
@@ -55,7 +57,9 @@ class AutenticacionControllerTest {
     }
 
     @Test
-    void registrar_withVendedor_shouldBeForbidden() throws Exception {
+    void registrar_conVendedor_debeResponder403YNoRegistrar() throws Exception {
+        // Arrange
+        // Act + Assert
         mockMvc.perform(post("/auth/registrar")
                         .header("X-User-Username", "vendedor")
                         .header("X-User-Roles", "VENDEDOR")
@@ -67,9 +71,11 @@ class AutenticacionControllerTest {
     }
 
     @Test
-    void registrar_withAdmin_shouldReturnOk() throws Exception {
+    void registrar_conAdministrador_debeResponder200() throws Exception {
+        // Arrange
         when(authService.registrar(any(AuthRequest.class))).thenReturn("Usuario Registrado");
 
+        // Act + Assert
         mockMvc.perform(post("/auth/registrar")
                         .header("X-User-Username", "admin")
                         .header("X-User-Roles", "ADMIN")
@@ -79,7 +85,21 @@ class AutenticacionControllerTest {
     }
 
     @Test
-    void registrar_withShortPassword_shouldReturnBadRequest() throws Exception {
+    void registrar_sinAutenticacion_debeResponder401YNoRegistrar() throws Exception {
+        // Arrange
+        // Act + Assert
+        mockMvc.perform(post("/auth/registrar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REGISTRO_JSON))
+                .andExpect(status().isUnauthorized());
+
+        verify(authService, never()).registrar(any(AuthRequest.class));
+    }
+
+    @Test
+    void registrar_conContrasenaCorta_debeResponder400YNoRegistrar() throws Exception {
+        // Arrange
+        // Act + Assert
         mockMvc.perform(post("/auth/registrar")
                         .header("X-User-Username", "admin")
                         .header("X-User-Roles", "ADMIN")
