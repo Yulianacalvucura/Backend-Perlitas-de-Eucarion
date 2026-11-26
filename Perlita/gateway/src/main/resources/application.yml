@@ -2,7 +2,7 @@ server:
   port: 9090
 
 jwt:
-  secret: "493358340235739058340598340598340598340598340598"
+  secret: "${JWT_SECRET:493358340235739058340598340598340598340598340598}"
 
 spring:
   application:
@@ -118,7 +118,10 @@ eureka:
     enabled: false
 
 springdoc:
+  api-docs:
+    path: /v3/api-docs
   swagger-ui:
+    path: /swagger-ui.html
     urls:
       - name: Servicio Materiales
         url: /api/v1/materiales/v3/api-docs

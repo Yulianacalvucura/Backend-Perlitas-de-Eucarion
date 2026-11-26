@@ -24,6 +24,11 @@ public class GastoController {
     private GastoService service;
 
     @Operation(summary = "Listar todos los gastos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de gastos obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar gastos")
+    })
     @GetMapping
     public List<Gasto> listar() {
         return service.listarTodos();
@@ -31,6 +36,8 @@ public class GastoController {
 
     @Operation(summary = "Buscar gasto por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Gasto encontrado"),
             @ApiResponse(responseCode = "404", description = "Gasto no encontrado")
     })
@@ -42,19 +49,36 @@ public class GastoController {
     }
 
     @Operation(summary = "Listar gastos por categoría")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Gastos de la categoría obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar gastos"),
+            @ApiResponse(responseCode = "404", description = "Categoría de gasto no encontrada")
+    })
     @GetMapping("/categoria/{categoriaId}")
     public List<Gasto> listarPorCategoria(@PathVariable Long categoriaId) {
         return service.listarPorCategoria(categoriaId);
     }
 
     @Operation(summary = "Listar gastos por proveedor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Gastos del proveedor obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar gastos"),
+            @ApiResponse(responseCode = "404", description = "Proveedor no encontrado")
+    })
     @GetMapping("/proveedor/{proveedorId}")
     public List<Gasto> listarPorProveedor(@PathVariable Long proveedorId) {
         return service.listarPorProveedor(proveedorId);
     }
 
     @Operation(summary = "Crear un nuevo gasto")
-    @ApiResponse(responseCode = "201", description = "Gasto creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Gasto creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Gasto> crear(@Valid @RequestBody Gasto gasto) {
         return new ResponseEntity<>(service.guardar(gasto), HttpStatus.CREATED);
@@ -62,6 +86,9 @@ public class GastoController {
 
     @Operation(summary = "Actualizar un gasto existente")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Gasto actualizado"),
             @ApiResponse(responseCode = "404", description = "Gasto no encontrado")
     })
@@ -76,6 +103,8 @@ public class GastoController {
 
     @Operation(summary = "Eliminar un gasto")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Gasto eliminado"),
             @ApiResponse(responseCode = "404", description = "Gasto no encontrado")
     })

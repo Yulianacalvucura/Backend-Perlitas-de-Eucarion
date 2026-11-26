@@ -26,13 +26,23 @@ public class BloqueoController {
     }
 
     @Operation(summary = "Listar todos los bloqueos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de bloqueos obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar bloqueos")
+    })
     @GetMapping
     public ResponseEntity<List<Bloqueo>> listarTodos() {
         return ResponseEntity.ok(bloqueoService.listarTodos());
     }
 
     @Operation(summary = "Crear un bloqueo", description = "Impide crear producciones en el rango de fechas especificado")
-    @ApiResponse(responseCode = "201", description = "Bloqueo creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Bloqueo creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Bloqueo> crear(@Valid @RequestBody Bloqueo bloqueo) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bloqueoService.crear(bloqueo));
@@ -40,6 +50,8 @@ public class BloqueoController {
 
     @Operation(summary = "Eliminar un bloqueo")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Bloqueo eliminado"),
             @ApiResponse(responseCode = "404", description = "Bloqueo no encontrado")
     })

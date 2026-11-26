@@ -25,12 +25,22 @@ public class CategoriaController {
     private CategoriaService service;
 
     @Operation(summary = "Listar todas las categorías")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de categorías obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar categorías")
+    })
     @GetMapping
     public List<Categoria> listar() {
         return service.listarTodos();
     }
 
     @Operation(summary = "Listar categorías activas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Categorías activas obtenidas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar categorías")
+    })
     @GetMapping("/activas")
     public List<Categoria> listarActivas() {
         return service.listarActivas(1);
@@ -38,6 +48,8 @@ public class CategoriaController {
 
     @Operation(summary = "Buscar una categoría por su ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Categoría encontrada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
@@ -49,7 +61,12 @@ public class CategoriaController {
     }
 
     @Operation(summary = "Crear una nueva categoría")
-    @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Categoria> crear(@Valid @RequestBody Categoria categoria) {
         return new ResponseEntity<>(service.guardar(categoria), HttpStatus.CREATED);
@@ -57,6 +74,9 @@ public class CategoriaController {
 
     @Operation(summary = "Actualizar una categoría existente")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Categoría actualizada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
@@ -75,6 +95,8 @@ public class CategoriaController {
 
     @Operation(summary = "Eliminar una categoría")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Categoría eliminada"),
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
@@ -86,6 +108,12 @@ public class CategoriaController {
     }
 
     @Operation(summary = "Obtener productos de una categoría")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Productos de la categoría obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar categorías"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
     @GetMapping("/obtenerProducto/{categoriaId}")
     public List<ProductoCategoria> obtenerProductosDe(@PathVariable Long categoriaId) {
         return service.obtenerProductosDe(categoriaId);
@@ -94,6 +122,8 @@ public class CategoriaController {
     @Operation(summary = "Reasignar productos entre categorías",
                description = "Transfiere todos los productos de la categoría origen a la categoría destino")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Productos reasignados"),
             @ApiResponse(responseCode = "400", description = "Categoría destino inactiva")
     })

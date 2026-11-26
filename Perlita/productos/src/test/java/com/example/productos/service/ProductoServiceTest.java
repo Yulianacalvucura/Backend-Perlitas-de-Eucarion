@@ -28,7 +28,7 @@ class ProductoServiceTest {
     private ProductoMaterialRepository productoMaterialRepository;
 
     @Mock
-    private WebClient.Builder webClientBuilder;
+    private WebClient materialesWebClient;
 
     @InjectMocks
     private ProductoService service;
@@ -104,14 +104,12 @@ class ProductoServiceTest {
         List<ProductoMaterial> materiales = List.of(pm);
         when(productoMaterialRepository.findByProductoId(1L)).thenReturn(materiales);
 
-        WebClient webClient = mock(WebClient.class);
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
         WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("http://localhost:8081/materiales/10")).thenReturn(requestHeadersSpec);
+        when(materialesWebClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/materiales/{id}", 10L)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("material-data"));
 
@@ -120,6 +118,54 @@ class ProductoServiceTest {
         assertEquals(1, actual.size());
         assertEquals("material-data", actual.get(0).getDatosMaterial());
         verify(productoMaterialRepository).findByProductoId(1L);
+    }
+
+    @Test
+    void ajustarStock_cuandoAjusteValido_debeDescontarYGuardar() {
+        Producto producto = new Producto();
+        producto.setId(1L);
+        producto.setStockDisponible(10);
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Producto actual = service.ajustarStock(1L, -3);
+
+        assertEquals(7, actual.getStockDisponible());
+        verify(productoRepository).save(producto);
+    }
+
+    @Test
+    void ajustarStock_cuandoStockInsuficiente_debeLanzarExcepcionYSinGuardar() {
+        Producto producto = new Producto();
+        producto.setId(1L);
+        producto.setStockDisponible(2);
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.ajustarStock(1L, -3));
+
+        assertTrue(ex.getMessage().contains("Stock insuficiente"));
+        assertEquals(2, producto.getStockDisponible());
+        verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void ajustarStock_cuandoProductoNoExiste_debeLanzarExcepcion() {
+        when(productoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(com.example.productos.exception.ResourceNotFoundException.class,
+                () -> service.ajustarStock(99L, -1));
+
+        verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void ajustarStock_cuandoAjusteNulo_debeLanzarExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.ajustarStock(1L, null));
+
+        assertTrue(ex.getMessage().contains("obligatorio"));
+        verifyNoInteractions(productoRepository);
     }
 
     @Test

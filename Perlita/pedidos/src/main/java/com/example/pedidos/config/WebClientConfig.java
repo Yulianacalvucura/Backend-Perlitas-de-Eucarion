@@ -16,11 +16,17 @@ public class WebClientConfig {
 
     @Bean("productosWebClient")
     public WebClient productosWebClient() {
-        return WebClient.builder().baseUrl(productosUrl).build();
+        return WebClient.builder()
+                .baseUrl(productosUrl)
+                .filter(WebClientAuthPropagationFilter.propagateAuthHeaders())
+                .build();
     }
 
     @Bean("calendarioWebClient")
     public WebClient calendarioWebClient() {
-        return WebClient.builder().baseUrl(calendarioUrl).build();
+        return WebClient.builder()
+                .baseUrl(calendarioUrl)
+                .filter(WebClientAuthPropagationFilter.propagateAuthHeaders())
+                .build();
     }
 }

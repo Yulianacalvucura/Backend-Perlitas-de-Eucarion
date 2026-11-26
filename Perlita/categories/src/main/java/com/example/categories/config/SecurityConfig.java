@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.time.LocalDateTime;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -18,14 +20,16 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/categorias/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.PUT, "/categorias/**").hasAnyAuthority("ADMIN", "VENDEDOR")
                 .requestMatchers(HttpMethod.POST, "/categorias/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/categorias/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/categorias/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/categorias/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/categorias/v3/api-docs/",
                     "/api/v1/categorias/v3/api-docs/**",
                     "/swagger-ui/",
                     "/swagger-ui.html",
+                    "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated()
@@ -34,8 +38,11 @@ public class SecurityConfig {
                 .accessDeniedHandler(new CustomAccessDeniedHandler())
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(403);
-                    response.getWriter().write("{\"status\": 403, \"error\": \"Forbidden\", \"mensaje\": \"Acceso denegado: No posees los privilegios requeridos para realizar esta acción.\"}");
+                    response.setStatus(401);
+                    response.getWriter().write(String.format(
+                        "{\"timestamp\": \"%s\", \"status\": 401, \"error\": \"Unauthorized\", \"mensaje\": \"Autenticación requerida: token faltante o inválido.\"}",
+                        LocalDateTime.now()
+                    ));
                 })
             )
             .addFilterBefore(new RequestHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

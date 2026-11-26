@@ -25,6 +25,11 @@ public class MaterialController {
     private MaterialService service;
 
     @Operation(summary = "Listar todos los materiales")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de materiales obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar materiales")
+    })
     @GetMapping
     public List<Material> listar() {
         return service.listarTodos();
@@ -32,6 +37,8 @@ public class MaterialController {
 
     @Operation(summary = "Buscar material por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Material encontrado"),
             @ApiResponse(responseCode = "404", description = "Material no encontrado")
     })
@@ -43,7 +50,12 @@ public class MaterialController {
     }
 
     @Operation(summary = "Crear un material")
-    @ApiResponse(responseCode = "201", description = "Material creado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Material creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Material> crear(@Valid @RequestBody Material material) {
         return new ResponseEntity<>(service.guardar(material), HttpStatus.CREATED);
@@ -51,6 +63,9 @@ public class MaterialController {
 
     @Operation(summary = "Actualizar un material")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Material actualizado"),
             @ApiResponse(responseCode = "404", description = "Material no encontrado")
     })
@@ -64,6 +79,8 @@ public class MaterialController {
 
     @Operation(summary = "Eliminar un material")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Material eliminado"),
             @ApiResponse(responseCode = "404", description = "Material no encontrado")
     })
@@ -76,6 +93,11 @@ public class MaterialController {
 
     @Operation(summary = "Listar materiales con stock bajo",
                description = "Retorna materiales cuyo stock actual está por debajo del mínimo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Materiales con stock bajo obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar materiales")
+    })
     @GetMapping("/stock-bajo")
     public List<Material> stockBajo() {
         return service.stockBajo();

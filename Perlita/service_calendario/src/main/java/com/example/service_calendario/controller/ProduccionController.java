@@ -30,6 +30,11 @@ public class ProduccionController {
 
     @Operation(summary = "Listar todas las producciones",
                description = "Retorna todas las órdenes enriquecidas con datos de producto y pedido")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de producciones obtenida correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar producciones")
+    })
     @GetMapping
     public ResponseEntity<List<Produccion>> listarTodas() {
         return ResponseEntity.ok(produccionService.listarTodas());
@@ -37,6 +42,8 @@ public class ProduccionController {
 
     @Operation(summary = "Buscar producción por ID")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Producción encontrada"),
             @ApiResponse(responseCode = "404", description = "Producción no encontrada")
     })
@@ -47,6 +54,12 @@ public class ProduccionController {
 
     @Operation(summary = "Filtrar por rango de fechas",
                description = "Retorna producciones cuyo rango solapa con las fechas indicadas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Calendario de producción obtenido correctamente"),
+            @ApiResponse(responseCode = "400", description = "Rango de fechas inválido"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar producciones")
+    })
     @GetMapping("/calendario")
     public ResponseEntity<List<Produccion>> calendario(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -56,7 +69,12 @@ public class ProduccionController {
 
     @Operation(summary = "Crear una producción",
                description = "Valida que no haya solapamiento con bloqueos existentes")
-    @ApiResponse(responseCode = "201", description = "Producción creada exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Producción creada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<Produccion> crear(@Valid @RequestBody Produccion produccion) {
         Produccion creada = produccionService.crear(produccion);
@@ -65,6 +83,9 @@ public class ProduccionController {
 
     @Operation(summary = "Actualizar una producción")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "200", description = "Producción actualizada"),
             @ApiResponse(responseCode = "404", description = "Producción no encontrada")
     })
@@ -76,6 +97,13 @@ public class ProduccionController {
 
     @Operation(summary = "Cambiar estado de producción",
                description = "Estados válidos: programado, en_proceso, finalizado, completado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado de la producción actualizado"),
+            @ApiResponse(responseCode = "400", description = "Estado inválido o cuerpo incorrecto"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para modificar producciones"),
+            @ApiResponse(responseCode = "404", description = "Producción no encontrada")
+    })
     @PatchMapping("/{id}/estado")
     public ResponseEntity<Produccion> cambiarEstado(@PathVariable Integer id,
                                                      @RequestBody Map<String, String> body) {
@@ -84,6 +112,8 @@ public class ProduccionController {
 
     @Operation(summary = "Eliminar una producción")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Producción eliminada"),
             @ApiResponse(responseCode = "404", description = "Producción no encontrada")
     })

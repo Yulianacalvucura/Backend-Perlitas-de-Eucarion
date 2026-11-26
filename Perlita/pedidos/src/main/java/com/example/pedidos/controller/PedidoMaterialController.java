@@ -22,13 +22,24 @@ public class PedidoMaterialController {
     private PedidoMaterialService service;
 
     @Operation(summary = "Listar materiales de un pedido")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Materiales del pedido obtenidos correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para consultar pedidos"),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    })
     @GetMapping("/pedido/{pedidoId}")
     public List<PedidoMaterial> listarPorPedido(@PathVariable Long pedidoId) {
         return service.listarPorPedidoId(pedidoId);
     }
 
     @Operation(summary = "Asignar material a un pedido")
-    @ApiResponse(responseCode = "201", description = "Material asignado exitosamente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Material asignado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación")
+    })
     @PostMapping
     public ResponseEntity<PedidoMaterial> crear(@Valid @RequestBody PedidoMaterial pedidoMaterial) {
         return new ResponseEntity<>(service.guardar(pedidoMaterial), HttpStatus.CREATED);
@@ -36,6 +47,8 @@ public class PedidoMaterialController {
 
     @Operation(summary = "Eliminar material de un pedido")
     @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Token JWT faltante o inválido"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos para esta operación"),
             @ApiResponse(responseCode = "204", description = "Material eliminado del pedido"),
             @ApiResponse(responseCode = "404", description = "Material no encontrado en el pedido")
     })

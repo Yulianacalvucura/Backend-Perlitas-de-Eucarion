@@ -224,20 +224,45 @@ También existen pruebas básicas de carga del contexto en `reportes`, `service_
 
 Para ejecutar las pruebas de un servicio:
 
-```bash
-cd Perlita/<servicio>
-./mvnw test
-```
+Matriz de autorizaci?n. **Criterio ?nico**: la fuente de verdad es el `SecurityConfig` de cada microservicio; el gateway valida JWT y no contradice la matriz (no aplica reglas de rol por recurso, salvo autenticaci?n/login p?blico).
 
-En Windows:
+| Recurso | ADMIN | VENDEDOR |
+|---|---|---|
+| Ventas (`/ventas`), pedidos (`/pedidos`), pedido-materiales (`/pedido-materiales`) | Todo (GET, POST, PUT, PATCH, DELETE) | GET, POST, PUT |
+| Producci?n (`/api/v1/produccion/**`) | Todo | GET, POST, PUT, PATCH (incluye cambio de estado) |
+| Bloqueos (`/api/v1/produccion/bloqueos/**`) | Todo | Solo GET |
+| Productos (`/productos`), materiales (`/materiales`), categor?as (`/categorias`), galer?a (`/galeria`) | Todo | GET, PUT |
+| Proveedores (`/proveedores`), proveedor-materiales (`/proveedor-materiales`), gastos (`/gastos`), categor?as-gasto (`/categorias-gasto`), reportes (`/reportes`) | Todo | Sin acceso |
+| Auth (`/auth/registrar`, gesti?n de usuarios) | Solo ADMIN | Sin acceso |
+| Login (`POST /auth/login`) | P?blico | P?blico |
 
-```bash
-mvnw.cmd test
-```
+Reglas generales:
+- `DELETE`: siempre solo `ADMIN`.
+- Falta autenticaci?n/token inv?lido: `401 Unauthorized` (formato JSON del proyecto).
+- Autenticado sin permiso: `403 Forbidden` (`CustomAccessDeniedHandler`).
+- No existe el rol `CLIENTE`.
 
 ---
 
-## Estado actual — Evaluación 3
+## Variables de entorno (seguridad)
+
+Los secretos y credenciales se externalizan con variables de entorno. Los valores por defecto son **solo para desarrollo**; en cualquier entorno compartido/producci?n deben definirse expl?citamente.
+
+| Variable | Uso | Valor por defecto (dev) |
+|---|---|---|
+| `JWT_SECRET` | Secreto HMAC para firmar/validar JWT (gateway y service-auth) | secreto de desarrollo incluido en config |
+| `DB_USER` | Usuario de base de datos MySQL | `root` |
+| `DB_PASSWORD` | Contrase?a de base de datos MySQL | vac?o |
+
+Aplica en todos los `application.properties`/`application.yml` de los microservicios.
+
+## Comunicaci?n entre microservicios
+
+- Las llamadas WebClient inter-servicio propagan `X-User-Username` y `X-User-Roles` desde la petici?n entrante (`RequestContextHolder`) mediante `ExchangeFilterFunction`.
+- Se distingue `404` (recurso no existe) de errores `5xx`/red: estos ?ltimos lanzan `ServicioNoDisponibleException` y responden `503 Servicio no disponible`.
+- Un microservicio llamado directamente, sin pasar por gateway y sin headers de identidad, responde `401 Unauthorized`.
+
+## Reglas de negocio
 
 Actualmente se encuentra implementada gran parte de la estructura del backend: microservicios, persistencia MySQL, Gateway, autenticación JWT, Swagger, lógica de negocio y pruebas en distintos servicios.
 

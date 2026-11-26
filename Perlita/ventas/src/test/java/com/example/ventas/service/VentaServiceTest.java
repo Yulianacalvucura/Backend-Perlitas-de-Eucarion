@@ -1,16 +1,18 @@
 package com.example.ventas.service;
 
+import com.example.ventas.exception.ResourceNotFoundException;
+import com.example.ventas.model.Venta;
+import com.example.ventas.model.VentaProducto;
+import com.example.ventas.repository.VentaProductoRepository;
+import com.example.ventas.repository.VentaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import com.example.ventas.model.Venta;
-import com.example.ventas.model.VentaProducto;
-import com.example.ventas.repository.VentaProductoRepository;
-import com.example.ventas.repository.VentaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,7 +32,34 @@ class VentaServiceTest {
     private VentaProductoRepository ventaProductoRepository;
 
     @Mock
-    private WebClient.Builder webClientBuilder;
+    private WebClient productosWebClient;
+
+    @Mock
+    private WebClient pedidosWebClient;
+
+    @Mock
+    private WebClient.RequestHeadersUriSpec requestHeadersUriSpec;
+
+    @Mock
+    private WebClient.RequestHeadersSpec requestHeadersSpec;
+
+    @Mock
+    private WebClient.RequestBodyUriSpec requestBodyUriSpec;
+
+    @Mock
+    private WebClient.RequestBodySpec requestBodySpec;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpec;
+
+    @Mock
+    private WebClient.RequestHeadersUriSpec pedidosRequestHeadersUriSpec;
+
+    @Mock
+    private WebClient.RequestHeadersSpec pedidosRequestHeadersSpec;
+
+    @Mock
+    private WebClient.ResponseSpec pedidosResponseSpec;
 
     @InjectMocks
     private VentaService service;
@@ -83,57 +112,122 @@ class VentaServiceTest {
     }
 
     @Test
-    void crearVenta_conProductos_debeCalcularTotalYGuardar() {
+    void crearVenta_conProductos_debeTomarPrecioDesdeProductosYDescontarStock() {
         Venta venta = new Venta();
         venta.setClienteId(1L);
-        VentaProducto vp1 = new VentaProducto();
-        vp1.setPrecioUnitario(100.0);
-        vp1.setCantidad(2);
-        VentaProducto vp2 = new VentaProducto();
-        vp2.setPrecioUnitario(50.0);
-        vp2.setCantidad(3);
-        venta.setProductos(List.of(vp1, vp2));
+        VentaProducto vp = new VentaProducto();
+        vp.setProductoId(10L);
+        vp.setCantidad(2);
+        vp.setPrecioUnitario(999.0);
+        venta.setProductos(List.of(vp));
 
-        Venta guardada = new Venta();
-        guardada.setId(1L);
-        guardada.setClienteId(1L);
-        guardada.setFecha(LocalDate.now());
-        guardada.setTotal(350.0);
-        guardada.setProductos(List.of(vp1, vp2));
+        Map<String, Object> producto = producto(10L, true, 5, 100.0);
+        stubObtenerProducto(10L, producto);
+        stubDescontarStock(10L);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        WebClient webClient = mock(WebClient.class);
-        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
-        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
-        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+        Venta actual = service.crearVenta(venta);
 
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("datos-producto"));
-        when(ventaRepository.save(any(Venta.class))).thenReturn(guardada);
+        assertEquals(200.0, actual.getTotal());
+        assertEquals(100.0, actual.getProductos().get(0).getPrecioUnitario());
+        assertEquals(LocalDate.now(), actual.getFecha());
+        verify(ventaRepository).save(any(Venta.class));
+        verify(ventaProductoRepository).saveAll(anyList());
+        verify(requestBodySpec).bodyValue(Map.of("ajuste", -2));
+    }
+
+    @Test
+    void crearVenta_whenProductoInactivo_debeFallarSinGuardarNiDescontar() {
+        Venta venta = new Venta();
+        venta.setClienteId(1L);
+        VentaProducto vp = new VentaProducto();
+        vp.setProductoId(10L);
+        vp.setCantidad(1);
+        venta.setProductos(List.of(vp));
+        stubObtenerProducto(10L, producto(10L, false, 5, 100.0));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
+        assertTrue(ex.getMessage().contains("no está activo"));
+        verify(ventaRepository, never()).save(any(Venta.class));
+        verify(productosWebClient, never()).patch();
+    }
+
+    @Test
+    void crearVenta_whenStockInsuficiente_debeFallarSinGuardarNiDescontar() {
+        Venta venta = new Venta();
+        venta.setClienteId(1L);
+        VentaProducto vp = new VentaProducto();
+        vp.setProductoId(10L);
+        vp.setCantidad(5);
+        venta.setProductos(List.of(vp));
+        stubObtenerProducto(10L, producto(10L, true, 2, 100.0));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
+        assertTrue(ex.getMessage().contains("Stock insuficiente"));
+        verify(ventaRepository, never()).save(any(Venta.class));
+        verify(productosWebClient, never()).patch();
+    }
+
+    @Test
+    void crearVenta_whenCantidadInvalida_debeFallarSinConsultarProductos() {
+        Venta venta = new Venta();
+        venta.setClienteId(1L);
+        VentaProducto vp = new VentaProducto();
+        vp.setProductoId(10L);
+        vp.setCantidad(0);
+        venta.setProductos(List.of(vp));
+
+        assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
+        verify(productosWebClient, never()).get();
+        verify(ventaRepository, never()).save(any(Venta.class));
+    }
+
+    @Test
+    void crearVenta_whenPedidoNoExiste_debeFallarSinGuardar() {
+        Venta venta = new Venta();
+        venta.setClienteId(1L);
+        venta.setPedidoId(7L);
+        when(pedidosWebClient.get()).thenReturn(pedidosRequestHeadersUriSpec);
+        when(pedidosRequestHeadersUriSpec.uri("/pedidos/{id}", 7L)).thenReturn(pedidosRequestHeadersSpec);
+        when(pedidosRequestHeadersSpec.retrieve()).thenReturn(pedidosResponseSpec);
+        when(pedidosResponseSpec.bodyToMono(Object.class)).thenReturn(Mono.error(
+                WebClientResponseException.create(404, "Not Found", null, null, null)));
+
+        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class, () -> service.crearVenta(venta));
+        assertTrue(ex.getMessage().contains("Pedido no encontrado"));
+        verify(ventaRepository, never()).save(any(Venta.class));
+        verify(productosWebClient, never()).get();
+    }
+
+    @Test
+    void crearVenta_conPedidoValido_debeGuardar() {
+        Venta venta = new Venta();
+        venta.setClienteId(1L);
+        venta.setPedidoId(7L);
+        stubPedidoExiste(7L);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Venta actual = service.crearVenta(venta);
 
         assertNotNull(actual);
-        assertEquals(350.0, actual.getTotal());
+        assertEquals(7L, actual.getPedidoId());
         verify(ventaRepository).save(any(Venta.class));
-        verify(ventaProductoRepository).saveAll(anyList());
     }
 
     @Test
     void crearVenta_sinProductos_debeGuardarDirectamente() {
         Venta venta = new Venta();
         venta.setClienteId(1L);
-        when(ventaRepository.save(any(Venta.class))).thenReturn(venta);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Venta actual = service.crearVenta(venta);
 
         assertNotNull(actual);
-        assertNotNull(actual.getFecha());
         assertEquals(LocalDate.now(), actual.getFecha());
+        assertEquals(0.0, actual.getTotal());
         verify(ventaRepository).save(any(Venta.class));
         verify(ventaProductoRepository, never()).saveAll(anyList());
+        verify(productosWebClient, never()).patch();
     }
 
     @Test
@@ -145,26 +239,19 @@ class VentaServiceTest {
         venta.setProductos(List.of(vp));
         when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
 
-        WebClient webClient = mock(WebClient.class);
-        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
-        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
-        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-
-        when(webClientBuilder.build()).thenReturn(webClient);
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just("datos"));
+        Map<String, Object> producto = producto(10L, true, 5, 100.0);
+        stubObtenerProducto(10L, producto);
 
         Venta actual = service.obtenerVentaCompleta(1L);
 
         assertNotNull(actual);
-        assertEquals("datos", actual.getProductos().get(0).getDatosProducto());
+        assertEquals(producto, actual.getProductos().get(0).getDatosProducto());
     }
 
     @Test
     void obtenerVentaCompleta_whenNotExists_shouldReturnNull() {
         when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
+
         assertNull(service.obtenerVentaCompleta(99L));
     }
 
@@ -181,5 +268,35 @@ class VentaServiceTest {
         assertEquals(5L, actual.get(0).get("cantidadVentas"));
         assertEquals(1500.0, actual.get(0).get("totalRecaudado"));
         verify(ventaRepository).resumenPorMetodoPago();
+    }
+
+    private Map<String, Object> producto(Long id, boolean activo, int stock, double precio) {
+        return Map.of(
+                "id", id,
+                "activo", activo,
+                "stockDisponible", stock,
+                "precioVenta", precio);
+    }
+
+    private void stubObtenerProducto(Long id, Object producto) {
+        when(productosWebClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/productos/{id}", id)).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(Object.class)).thenReturn(Mono.just(producto));
+    }
+
+    private void stubDescontarStock(Long id) {
+        when(productosWebClient.patch()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri("/productos/{id}/stock", id)).thenReturn(requestBodySpec);
+        doReturn(requestBodySpec).when(requestBodySpec).bodyValue(any(Map.class));
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+    }
+
+    private void stubPedidoExiste(Long id) {
+        when(pedidosWebClient.get()).thenReturn(pedidosRequestHeadersUriSpec);
+        when(pedidosRequestHeadersUriSpec.uri("/pedidos/{id}", id)).thenReturn(pedidosRequestHeadersSpec);
+        when(pedidosRequestHeadersSpec.retrieve()).thenReturn(pedidosResponseSpec);
+        when(pedidosResponseSpec.bodyToMono(Object.class)).thenReturn(Mono.just(Map.of("id", id)));
     }
 }
