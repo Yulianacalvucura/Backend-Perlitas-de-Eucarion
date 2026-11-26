@@ -27,7 +27,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = rutaInterna(request.getRequestURI());
 
         if (path.startsWith("/swagger-ui") || path.contains("/v3/api-docs")) {
             return true;
@@ -72,7 +72,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String rolesStr = String.join(",", roles.stream().map(String.class::cast).toList());
         boolean admin = roles.contains("ADMIN");
         boolean vendedor = roles.contains("VENDEDOR");
-        String path = request.getRequestURI();
+        String path = rutaInterna(request.getRequestURI());
         boolean consultaPermitida = "GET".equalsIgnoreCase(request.getMethod())
                 && (path.equals("/auth/me")
                     || coincideRuta(path, "/productos")
@@ -91,6 +91,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
         // Los errores de los microservicios no son errores de autenticación.
         filterChain.doFilter(mutada, response);
+    }
+
+    private String rutaInterna(String path) {
+        return path.startsWith("/api/v1/") ? path.substring("/api/v1".length()) : path;
     }
 
     private boolean coincideRuta(String path, String base) {

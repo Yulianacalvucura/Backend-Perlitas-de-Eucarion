@@ -9,109 +9,190 @@ spring:
     name: gateway
   cloud:
     gateway:
-      mvc:
-        routes:
-          - id: auth-service
-            uri: http://localhost:8091
-            predicates:
-              - Path=/auth/**
-          - id: materiales
-            uri: http://localhost:8081
-            predicates:
-              - Path=/materiales/**
-          - id: productos
-            uri: http://localhost:8082
-            predicates:
-              - Path=/productos/**
-          - id: ventas
-            uri: http://localhost:8083
-            predicates:
-              - Path=/ventas/**
-          - id: categorias
-            uri: http://localhost:8084
-            predicates:
-              - Path=/categorias/**
-          - id: pedidos
-            uri: http://localhost:8085
-            predicates:
-              - Path=/pedidos/**
-          - id: pedido-materiales
-            uri: http://localhost:8085
-            predicates:
-              - Path=/pedido-materiales/**
-          - id: proveedores
-            uri: http://localhost:8086
-            predicates:
-              - Path=/proveedores/**
-          - id: proveedor-materiales
-            uri: http://localhost:8086
-            predicates:
-              - Path=/proveedor-materiales/**
-          - id: reportes
-            uri: http://localhost:8087
-            predicates:
-              - Path=/reportes/**
-          - id: galeria
-            uri: http://localhost:8088
-            predicates:
-              - Path=/galeria/**
-          - id: gastos
-            uri: http://localhost:8089
-            predicates:
-              - Path=/gastos/**
-          - id: categorias-gasto
-            uri: http://localhost:8089
-            predicates:
-              - Path=/categorias-gasto/**
+      server:
+        webmvc:
+          routes:
+            - id: auth-service
+              uri: http://localhost:8091
+              predicates:
+                - Path=/auth/**
+            - id: materiales
+              uri: http://localhost:8081
+              predicates:
+                - Path=/materiales/**
+            - id: productos
+              uri: http://localhost:8082
+              predicates:
+                - Path=/productos/**
+            - id: ventas
+              uri: http://localhost:8083
+              predicates:
+                - Path=/ventas/**
+            - id: categorias
+              uri: http://localhost:8084
+              predicates:
+                - Path=/categorias/**
+            - id: pedidos
+              uri: http://localhost:8085
+              predicates:
+                - Path=/pedidos/**
+            - id: pedido-materiales
+              uri: http://localhost:8085
+              predicates:
+                - Path=/pedido-materiales/**
+            - id: proveedores
+              uri: http://localhost:8086
+              predicates:
+                - Path=/proveedores/**
+            - id: proveedor-materiales
+              uri: http://localhost:8086
+              predicates:
+                - Path=/proveedor-materiales/**
+            - id: reportes
+              uri: http://localhost:8087
+              predicates:
+                - Path=/reportes/**
+            - id: galeria
+              uri: http://localhost:8088
+              predicates:
+                - Path=/galeria/**
+            - id: gastos
+              uri: http://localhost:8089
+              predicates:
+                - Path=/gastos/**
+            - id: categorias-gasto
+              uri: http://localhost:8089
+              predicates:
+                - Path=/categorias-gasto/**
 
-          - id: materiales-docs
-            uri: http://localhost:8081
-            predicates:
-              - Path=/api/v1/materiales/v3/api-docs
-          - id: productos-docs
-            uri: http://localhost:8082
-            predicates:
-              - Path=/api/v1/productos/v3/api-docs
-          - id: ventas-docs
-            uri: http://localhost:8083
-            predicates:
-              - Path=/api/v1/ventas/v3/api-docs
-          - id: categorias-docs
-            uri: http://localhost:8084
-            predicates:
-              - Path=/api/v1/categorias/v3/api-docs
-          - id: galeria-docs
-            uri: http://localhost:8088
-            predicates:
-              - Path=/api/v1/galeria/v3/api-docs
-          - id: reportes-docs
-            uri: http://localhost:8087
-            predicates:
-              - Path=/api/v1/reportes/v3/api-docs
-          - id: calendario
-            uri: http://localhost:8090
-            predicates:
-              - Path=/api/v1/produccion/**
-          - id: calendario-docs
-            uri: http://localhost:8090
-            predicates:
-              - Path=/api/v1/calendario/v3/api-docs
-          - id: pedidos-docs
-            uri: http://localhost:8085
-            predicates:
-              - Path=/api/v1/pedidos/v3/api-docs
-          - id: proveedores-docs
-            uri: http://localhost:8086
-            predicates:
-              - Path=/api/v1/proveedores/v3/api-docs
-          - id: gastos-docs
-            uri: http://localhost:8089
-            predicates:
-              - Path=/api/v1/gastos/v3/api-docs
-          - id: auth-docs
-            uri: http://localhost:8091
-            predicates:
-              - Path=/api/v1/auth/v3/api-docs
+            - id: materiales-docs
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/materiales/v3/api-docs
+            - id: productos-docs
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/productos/v3/api-docs
+            - id: ventas-docs
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/ventas/v3/api-docs
+            - id: categorias-docs
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/v1/categorias/v3/api-docs
+            - id: galeria-docs
+              uri: http://localhost:8088
+              predicates:
+                - Path=/api/v1/galeria/v3/api-docs
+            - id: reportes-docs
+              uri: http://localhost:8087
+              predicates:
+                - Path=/api/v1/reportes/v3/api-docs
+            - id: calendario
+              uri: http://localhost:8090
+              predicates:
+                - Path=/api/v1/produccion/**
+            - id: calendario-docs
+              uri: http://localhost:8090
+              predicates:
+                - Path=/api/v1/calendario/v3/api-docs
+            - id: pedidos-docs
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/v1/pedidos/v3/api-docs
+            - id: proveedores-docs
+              uri: http://localhost:8086
+              predicates:
+                - Path=/api/v1/proveedores/v3/api-docs
+            - id: gastos-docs
+              uri: http://localhost:8089
+              predicates:
+                - Path=/api/v1/gastos/v3/api-docs
+            - id: auth-docs
+              uri: http://localhost:8091
+              predicates:
+                - Path=/api/v1/auth/v3/api-docs
+
+            # API REST v1: se conserva la ruta interna de cada microservicio.
+            - id: auth-service-v1
+              uri: http://localhost:8091
+              predicates:
+                - Path=/api/v1/auth/**
+              filters:
+                - StripPrefix=2
+            - id: materiales-v1
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/materiales/**
+              filters:
+                - StripPrefix=2
+            - id: productos-v1
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/productos/**
+              filters:
+                - StripPrefix=2
+            - id: ventas-v1
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/ventas/**
+              filters:
+                - StripPrefix=2
+            - id: categorias-v1
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/v1/categorias/**
+              filters:
+                - StripPrefix=2
+            - id: pedidos-v1
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/v1/pedidos/**
+              filters:
+                - StripPrefix=2
+            - id: pedido-materiales-v1
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/v1/pedido-materiales/**
+              filters:
+                - StripPrefix=2
+            - id: proveedores-v1
+              uri: http://localhost:8086
+              predicates:
+                - Path=/api/v1/proveedores/**
+              filters:
+                - StripPrefix=2
+            - id: proveedor-materiales-v1
+              uri: http://localhost:8086
+              predicates:
+                - Path=/api/v1/proveedor-materiales/**
+              filters:
+                - StripPrefix=2
+            - id: reportes-v1
+              uri: http://localhost:8087
+              predicates:
+                - Path=/api/v1/reportes/**
+              filters:
+                - StripPrefix=2
+            - id: galeria-v1
+              uri: http://localhost:8088
+              predicates:
+                - Path=/api/v1/galeria/**
+              filters:
+                - StripPrefix=2
+            - id: gastos-v1
+              uri: http://localhost:8089
+              predicates:
+                - Path=/api/v1/gastos/**
+              filters:
+                - StripPrefix=2
+            - id: categorias-gasto-v1
+              uri: http://localhost:8089
+              predicates:
+                - Path=/api/v1/categorias-gasto/**
+              filters:
+                - StripPrefix=2
 
 eureka:
   client:
