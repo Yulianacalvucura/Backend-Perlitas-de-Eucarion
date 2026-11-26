@@ -78,7 +78,7 @@ createDatabaseIfNotExist=true
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-El repositorio también incluye scripts SQL de apoyo para creación, respaldo y datos de prueba.
+Los scripts SQL históricos y los respaldos se archivaron fuera del repositorio. El esquema operativo se genera desde las entidades JPA. El diagrama `Relational.png` se conserva como referencia del modelo original.
 
 > La integración se ha probado en desarrollo local. La pauta no exige desplegar la aplicación en la nube.
 
@@ -142,7 +142,7 @@ El Gateway debe quedar disponible en:
 http://localhost:9090/api/v1
 ```
 
-Para ejecutar el frontend, copiar `.env.example` a `.env` en su repositorio, usar `VITE_API_URL=/api/v1`, ejecutar `npm install` y `npm run dev`. El proxy de Vite reenvía las peticiones al Gateway. No iniciar el mock-server para la integración real.
+Para ejecutar el frontend, copiar `.env.example` a `.env` en su repositorio, usar `VITE_API_URL=/api/v1`, ejecutar `npm install` y `npm run dev`. El proxy de Vite reenvía las peticiones al Gateway.
 
 ---
 
@@ -251,21 +251,13 @@ Para ejecutar las pruebas de un servicio, desde su carpeta:
 .\mvnw.cmd test
 ```
 
-Resultados de los reportes Surefire revisados el 25-11-2026 para los seis módulos principales:
+Resultados agregados de los reportes Surefire del 26-11-2026, antes de la limpieza:
 
-| Servicio | Pruebas registradas | Fallos | Errores |
-|---|---:|---:|---:|
-| categories | 25 | 0 | 0 |
-| gateway | 8 | 0 | 0 |
-| pedidos | 35 | 0 | 0 |
-| productos | 27 | 0 | 0 |
-| service-auth | 16 | 0 | 0 |
-| ventas | 25 | 0 | 0 |
-| **Total** | **136** | **0** | **0** |
+| Pruebas registradas | Fallos | Errores | Omitidas |
+|---:|---:|---:|---:|
+| 140 | 0 | 0 | 0 |
 
-Estos son los resultados anteriores a la tienda pública. Se añadieron 3 pruebas (2 de Gateway y 1 de ventas); deben ejecutarse para obtener las cifras definitivas.
-
-Estos resultados corresponden a los seis módulos indicados, no a una ejecución completa de los doce módulos. Los reportes no permiten confirmar aquí el número de pruebas omitidas. Además, se verificaron manualmente login, creación de categorías, CRUD de productos, ventas, descuento y devolución de stock, acceso de vendedor y rechazo HTTP 403 de una edición de producto desde la API.
+Estos resultados corresponden a los seis módulos principales ejecutados (autenticación, productos, categorías, ventas, pedidos y Gateway), no a una ejecución completa de los doce proyectos. Se verificaron manualmente login, categorías, CRUD de productos, ventas, descuento y devolución de stock, acceso de vendedor y rechazo HTTP 403. También se registró una compra pública y se consultó su detalle desde administración.
 
 ---
 
@@ -294,7 +286,7 @@ Reglas generales:
 |---|---|---|
 | GET | `/api/v1/productos/tienda` | Catálogo de productos activos (sin datos internos de materiales). |
 | GET | `/api/v1/categorias/tienda` | Categorías activas asociadas a productos. |
-| POST | `/api/v1/ventas/compra` | Compra como invitado; devuelve ID, total y estado. |
+| POST | `/api/v1/ventas/compra` | Compra como invitado; devuelve ID, estado, total y detalle de productos. |
 
 Las cabeceras de identidad que envíe un visitante son reemplazadas por el Gateway. Los servicios internos permanecen en loopback; el rol CLIENTE no permite modificar productos directamente a través del Gateway.
 
@@ -326,8 +318,8 @@ El sistema administrativo está integrado con React y utiliza persistencia real.
 
 Las tareas pendientes para cerrar la Evaluación 3 son:
 
-- Validar en ejecución la tienda pública y compra como invitado, sujeto a confirmar el alcance del rol cliente con el docente.
-- Validar la edición, baja de cuentas y rechazo de sesiones previamente emitidas; ejecutar las nuevas pruebas de tienda y actualizar los resultados de testing.
+- Confirmar con el docente el alcance del rol cliente invitado.
+- Validar la edición, baja de cuentas y rechazo de sesiones previamente emitidas; repetir las pruebas tras la limpieza.
 - Completar ERS, manual de usuario y documentación de APIs e integración.
 
 ---
@@ -363,10 +355,7 @@ Backend-Perlitas-de-Eucarion/
 │   ├── service-auth/
 │   ├── service_calendario/
 │   └── ventas/
-├── perlitas_mysql.sql
-├── perlitas_oracle.sql
-├── db_initialization.sql
-├── datos_prueba_perlita.sql
+├── Relational.png
 ├── iniciar.ps1
 ├── INTEGRACION_LOCAL.md
 └── README.md
