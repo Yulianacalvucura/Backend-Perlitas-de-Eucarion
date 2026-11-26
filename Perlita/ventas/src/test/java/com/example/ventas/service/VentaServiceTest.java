@@ -66,29 +66,23 @@ class VentaServiceTest {
 
     @Test
     void listarTodas_shouldReturnAllSales() {
-        // Arrange
         List<Venta> expected = List.of(new Venta());
         when(ventaRepository.findAll()).thenReturn(expected);
 
-        // Act
         List<Venta> actual = service.listarTodas();
 
-        // Assert
         assertEquals(expected, actual);
         verify(ventaRepository).findAll();
     }
 
     @Test
     void buscarPorId_whenExists_shouldReturnSale() {
-        // Arrange
         Venta v = new Venta();
         v.setId(1L);
         when(ventaRepository.findById(1L)).thenReturn(Optional.of(v));
 
-        // Act
         Optional<Venta> actual = service.buscarPorId(1L);
 
-        // Assert
         assertTrue(actual.isPresent());
         assertEquals(1L, actual.get().getId());
         verify(ventaRepository).findById(1L);
@@ -96,36 +90,29 @@ class VentaServiceTest {
 
     @Test
     void buscarPorId_whenNotExists_shouldReturnEmpty() {
-        // Arrange
         when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        // Act
         Optional<Venta> actual = service.buscarPorId(99L);
 
-        // Assert
         assertTrue(actual.isEmpty());
         verify(ventaRepository).findById(99L);
     }
 
     @Test
     void buscarPorCliente_shouldReturnSalesByClient() {
-        // Arrange
         Venta v = new Venta();
         v.setClienteId(5L);
         List<Venta> expected = List.of(v);
         when(ventaRepository.findByClienteId(5L)).thenReturn(expected);
 
-        // Act
         List<Venta> actual = service.buscarPorCliente(5L);
 
-        // Assert
         assertEquals(expected, actual);
         verify(ventaRepository).findByClienteId(5L);
     }
 
     @Test
     void crearVenta_conProductos_debeTomarPrecioDesdeProductosYDescontarStock() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         VentaProducto vp = new VentaProducto();
@@ -139,10 +126,8 @@ class VentaServiceTest {
         stubDescontarStock(10L);
         when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Venta actual = service.crearVenta(venta);
 
-        // Assert
         assertEquals(200.0, actual.getTotal());
         assertEquals(100.0, actual.getProductos().get(0).getPrecioUnitario());
         assertEquals(LocalDate.now(), actual.getFecha());
@@ -153,7 +138,6 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_whenProductoInactivo_debeFallarSinGuardarNiDescontar() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         VentaProducto vp = new VentaProducto();
@@ -162,7 +146,6 @@ class VentaServiceTest {
         venta.setProductos(List.of(vp));
         stubObtenerProducto(10L, producto(10L, false, 5, 100.0));
 
-        // Act + Assert
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
         assertTrue(ex.getMessage().contains("no está activo"));
         verify(ventaRepository, never()).save(any(Venta.class));
@@ -171,7 +154,6 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_whenStockInsuficiente_debeFallarSinGuardarNiDescontar() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         VentaProducto vp = new VentaProducto();
@@ -180,7 +162,6 @@ class VentaServiceTest {
         venta.setProductos(List.of(vp));
         stubObtenerProducto(10L, producto(10L, true, 2, 100.0));
 
-        // Act + Assert
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
         assertTrue(ex.getMessage().contains("Stock insuficiente"));
         verify(ventaRepository, never()).save(any(Venta.class));
@@ -189,7 +170,6 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_whenCantidadInvalida_debeFallarSinConsultarProductos() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         VentaProducto vp = new VentaProducto();
@@ -197,7 +177,6 @@ class VentaServiceTest {
         vp.setCantidad(0);
         venta.setProductos(List.of(vp));
 
-        // Act + Assert
         assertThrows(IllegalArgumentException.class, () -> service.crearVenta(venta));
         verify(productosWebClient, never()).get();
         verify(ventaRepository, never()).save(any(Venta.class));
@@ -205,7 +184,6 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_whenPedidoNoExiste_debeFallarSinGuardar() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         venta.setPedidoId(7L);
@@ -215,7 +193,6 @@ class VentaServiceTest {
         when(pedidosResponseSpec.bodyToMono(Object.class)).thenReturn(Mono.error(
                 WebClientResponseException.create(404, "Not Found", null, null, null)));
 
-        // Act + Assert
         ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class, () -> service.crearVenta(venta));
         assertTrue(ex.getMessage().contains("Pedido no encontrado"));
         verify(ventaRepository, never()).save(any(Venta.class));
@@ -224,17 +201,14 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_conPedidoValido_debeGuardar() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         venta.setPedidoId(7L);
         stubPedidoExiste(7L);
         when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Venta actual = service.crearVenta(venta);
 
-        // Assert
         assertNotNull(actual);
         assertEquals(7L, actual.getPedidoId());
         verify(ventaRepository).save(any(Venta.class));
@@ -242,15 +216,12 @@ class VentaServiceTest {
 
     @Test
     void crearVenta_sinProductos_debeGuardarDirectamente() {
-        // Arrange
         Venta venta = new Venta();
         venta.setClienteId(1L);
         when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Venta actual = service.crearVenta(venta);
 
-        // Assert
         assertNotNull(actual);
         assertEquals(LocalDate.now(), actual.getFecha());
         assertEquals(0.0, actual.getTotal());
@@ -261,7 +232,6 @@ class VentaServiceTest {
 
     @Test
     void obtenerVentaCompleta_whenExists_shouldReturnEnriched() {
-        // Arrange
         Venta venta = new Venta();
         venta.setId(1L);
         VentaProducto vp = new VentaProducto();
@@ -272,34 +242,27 @@ class VentaServiceTest {
         Map<String, Object> producto = producto(10L, true, 5, 100.0);
         stubObtenerProducto(10L, producto);
 
-        // Act
         Venta actual = service.obtenerVentaCompleta(1L);
 
-        // Assert
         assertNotNull(actual);
         assertEquals(producto, actual.getProductos().get(0).getDatosProducto());
     }
 
     @Test
     void obtenerVentaCompleta_whenNotExists_shouldReturnNull() {
-        // Arrange
         when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        // Act + Assert
         assertNull(service.obtenerVentaCompleta(99L));
     }
 
     @Test
     void resumenPorMetodoPago_shouldReturnMappedResults() {
-        // Arrange
         Object[] fila1 = {"efectivo", 5L, 1500.0};
         Object[] fila2 = {"tarjeta", 3L, 900.0};
         when(ventaRepository.resumenPorMetodoPago()).thenReturn(List.of(fila1, fila2));
 
-        // Act
         List<Map<String, Object>> actual = service.resumenPorMetodoPago();
 
-        // Assert
         assertEquals(2, actual.size());
         assertEquals("efectivo", actual.get(0).get("metodoPago"));
         assertEquals(5L, actual.get(0).get("cantidadVentas"));

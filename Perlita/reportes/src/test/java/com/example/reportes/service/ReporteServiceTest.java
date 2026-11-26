@@ -62,7 +62,6 @@ class ReporteServiceTest {
 
     @Test
     void generarReporteVentas_debeFiltrarPorRangoYDesglosarPorMetodoPago() throws Exception {
-        // Arrange
         LocalDate desde = LocalDate.of(2026, 6, 1);
         LocalDate hasta = LocalDate.of(2026, 6, 30);
         stubLista(ventasWebClient, "/ventas", Mono.just(List.of(
@@ -73,10 +72,8 @@ class ReporteServiceTest {
         stubLista(productosWebClient, "/productos", Mono.just(List.of(Map.of("id", 1), Map.of("id", 2))));
         when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Reporte actual = service.generarReporteVentas(desde, hasta);
 
-        // Assert
         assertEquals("ventas_por_periodo", actual.getTipo());
         JsonNode json = objectMapper.readTree(actual.getResultadoJson());
         assertEquals(2, json.get("cantidadVentas").asInt());
@@ -90,7 +87,6 @@ class ReporteServiceTest {
 
     @Test
     void generarReporteGastosPorCategoria_debeAgruparMontos() throws Exception {
-        // Arrange
         stubLista(gastosWebClient, "/gastos", Mono.just(List.of(
                 gasto(1L, "2026-06-05", 30.0),
                 gasto(1L, "2026-06-06", 20.0),
@@ -100,10 +96,8 @@ class ReporteServiceTest {
                 Map.of("id", 2, "nombre", "Insumos"))));
         when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Reporte actual = service.generarReporteGastosPorCategoria();
 
-        // Assert
         assertEquals("gastos_por_categoria", actual.getTipo());
         JsonNode json = objectMapper.readTree(actual.getResultadoJson());
         assertEquals(100.0, json.get("totalGastos").asDouble());
@@ -116,7 +110,6 @@ class ReporteServiceTest {
 
     @Test
     void generarReporteUtilidad_debeCalcularIngresosMenosGastosDelPeriodo() throws Exception {
-        // Arrange
         LocalDate desde = LocalDate.of(2026, 6, 1);
         LocalDate hasta = LocalDate.of(2026, 6, 30);
         stubLista(ventasWebClient, "/ventas", Mono.just(List.of(
@@ -127,10 +120,8 @@ class ReporteServiceTest {
                 gasto(1L, "2026-07-12", 500.0))));
         when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Reporte actual = service.generarReporteUtilidad(desde, hasta);
 
-        // Assert
         assertEquals("utilidad", actual.getTipo());
         JsonNode json = objectMapper.readTree(actual.getResultadoJson());
         assertEquals(200.0, json.get("ingresos").asDouble());
@@ -141,11 +132,9 @@ class ReporteServiceTest {
 
     @Test
     void generarReporteVentas_whenServicioNoDisponible_debePropagar() {
-        // Arrange
         stubLista(ventasWebClient, "/ventas", Mono.error(
                 WebClientResponseException.create(500, "Error", null, null, null)));
 
-        // Act + Assert
         assertThrows(ServicioNoDisponibleException.class,
                 () -> service.generarReporteVentas(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)));
         verify(reporteRepository, never()).save(any(Reporte.class));
