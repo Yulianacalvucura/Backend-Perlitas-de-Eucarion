@@ -107,13 +107,11 @@ class PedidoServiceTest {
 
     @Test
     void guardar_whenAbonoSuperaTotal_debeFallarSinGuardar() {
-        // Arrange
         Pedido input = new Pedido();
         input.setDescripcion("Pedido inválido");
         input.setTotal(BigDecimal.valueOf(100));
         input.setAbonoPagado(BigDecimal.valueOf(150));
 
-        // Act + Assert
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.guardar(input));
         assertTrue(ex.getMessage().contains("abono pagado"));
         verify(repository, never()).save(any(Pedido.class));
@@ -121,13 +119,11 @@ class PedidoServiceTest {
 
     @Test
     void guardar_whenFechaEntregaAnterior_debeFallarSinGuardar() {
-        // Arrange
         Pedido input = new Pedido();
         input.setDescripcion("Pedido inválido");
         input.setFechaPedido(LocalDate.now());
         input.setFechaEntrega(LocalDate.now().minusDays(1));
 
-        // Act + Assert
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.guardar(input));
         assertTrue(ex.getMessage().contains("fecha de entrega"));
         verify(repository, never()).save(any(Pedido.class));
@@ -135,7 +131,6 @@ class PedidoServiceTest {
 
     @Test
     void guardar_whenMontosYFechasValidas_debeGuardar() {
-        // Arrange
         Pedido input = new Pedido();
         input.setDescripcion("Pedido válido");
         input.setFechaPedido(LocalDate.now());
@@ -144,10 +139,8 @@ class PedidoServiceTest {
         input.setAbonoPagado(BigDecimal.valueOf(50));
         when(repository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Pedido actual = service.guardar(input);
 
-        // Assert
         assertEquals(BigDecimal.valueOf(50), actual.getAbonoPagado());
         assertEquals(LocalDate.now().plusDays(3), actual.getFechaEntrega());
         verify(repository).save(any(Pedido.class));
@@ -228,17 +221,14 @@ class PedidoServiceTest {
 
     @Test
     void cambiarEstado_canceladoDesdePendiente() {
-        // Arrange
         Pedido pedido = new Pedido();
         pedido.setId(1L);
         pedido.setEstado("pendiente");
         when(repository.findById(1L)).thenReturn(Optional.of(pedido));
         when(repository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         ResponseEntity<Object> response = service.cambiarEstado(1L, "cancelado");
 
-        // Assert
         assertEquals(200, response.getStatusCode().value());
         assertEquals("cancelado", ((Pedido) response.getBody()).getEstado());
         verify(repository).save(pedido);
@@ -246,33 +236,27 @@ class PedidoServiceTest {
 
     @Test
     void cambiarEstado_canceladoDesdeEnFabricacion() {
-        // Arrange
         Pedido pedido = new Pedido();
         pedido.setId(1L);
         pedido.setEstado("en_fabricacion");
         when(repository.findById(1L)).thenReturn(Optional.of(pedido));
         when(repository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         ResponseEntity<Object> response = service.cambiarEstado(1L, "cancelado");
 
-        // Assert
         assertEquals(200, response.getStatusCode().value());
         assertEquals("cancelado", ((Pedido) response.getBody()).getEstado());
     }
 
     @Test
     void cambiarEstado_canceladoDesdeListoParaEntrega_debeFallar() {
-        // Arrange
         Pedido pedido = new Pedido();
         pedido.setId(1L);
         pedido.setEstado("listo_para_entrega");
         when(repository.findById(1L)).thenReturn(Optional.of(pedido));
 
-        // Act
         ResponseEntity<Object> response = service.cambiarEstado(1L, "cancelado");
 
-        // Assert
         assertEquals(400, response.getStatusCode().value());
         verify(repository, never()).save(any(Pedido.class));
     }

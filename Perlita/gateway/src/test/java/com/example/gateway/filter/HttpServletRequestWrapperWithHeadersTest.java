@@ -16,7 +16,7 @@ class HttpServletRequestWrapperWithHeadersTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-User-Username", "hacker");
         request.addHeader("X-User-Roles", "ADMIN");
-        request.addHeader("x-user-roles", "ADMIN"); // case variation
+        request.addHeader("x-user-roles", "ADMIN");
 
         HttpServletRequestWrapperWithHeaders wrapper = new HttpServletRequestWrapperWithHeaders(request);
         wrapper.addHeader("X-User-Username", "usuario-real");
