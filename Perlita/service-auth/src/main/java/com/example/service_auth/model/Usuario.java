@@ -26,7 +26,7 @@ import lombok.EqualsAndHashCode;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "roles")
+@ToString(exclude = {"roles", "contrasena"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Schema(description = "Usuario del sistema con credenciales y roles")
 public class Usuario 
@@ -48,6 +48,12 @@ public class Usuario
     @Email(message = "Debe ser una dirección de correo válida")
     @Column(unique = true, nullable = false)
     private String correo;
+
+    private String nombre;
+    private String apellidos;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

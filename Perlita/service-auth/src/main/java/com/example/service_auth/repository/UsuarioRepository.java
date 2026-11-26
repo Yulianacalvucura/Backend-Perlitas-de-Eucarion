@@ -11,4 +11,5 @@ import com.example.service_auth.model.Usuario;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long>
 {
     Optional<Usuario>findByNombreUsuario(String nombreUsuario);
+    Optional<Usuario> findByCorreoIgnoreCase(String correo);
 }

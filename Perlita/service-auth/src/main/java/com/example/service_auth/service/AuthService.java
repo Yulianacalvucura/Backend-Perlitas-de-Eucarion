@@ -36,6 +36,9 @@ public class AuthService {
             throw new UsuarioDuplicadoException("El nombre de usuario ya existe.");
         }
 
+        if (usuarioRepository.findByCorreoIgnoreCase(request.getCorreo()).isPresent()) {
+            throw new UsuarioDuplicadoException("El correo ya existe.");
+        }
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setNombreUsuario(request.getNombreUsuario());
         nuevoUsuario.setCorreo(request.getCorreo());
@@ -68,9 +71,10 @@ public class AuthService {
     public String login(String nombreUsuario, String contrasena) {
     
         Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
+                .or(() -> usuarioRepository.findByCorreoIgnoreCase(nombreUsuario))
                 .orElseThrow(() -> new CredencialesInvalidasException("Credenciales inválidas"));
 
-        if (!passwordEncoder.matches(contrasena, usuario.getContrasena())) {
+        if (!usuario.isActivo() || !passwordEncoder.matches(contrasena, usuario.getContrasena())) {
             throw new CredencialesInvalidasException("Credenciales inválidas");
         }
 

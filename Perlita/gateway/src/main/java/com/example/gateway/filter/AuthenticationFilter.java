@@ -2,6 +2,7 @@ package com.example.gateway.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -48,30 +49,52 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        Claims claims;
         try {
-            Claims claims = Jwts.parserBuilder()
+            claims = Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor(secreto.getBytes(StandardCharsets.UTF_8)))
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-
-            String username = claims.getSubject();
-            List<String> roles = claims.get("roles", List.class);
-
-            String path = request.getRequestURI();
-            String method = request.getMethod();
-
-            String rolesStr = String.join(",", roles);
-
-            HttpServletRequestWrapperWithHeaders mutada = new HttpServletRequestWrapperWithHeaders(request);
-            mutada.addHeader("X-User-Username", username);
-            mutada.addHeader("X-User-Roles", rolesStr);
-
-            filterChain.doFilter(mutada, response);
-
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             onError(response, "El token JWT ha expirado o su firma es inválida.", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
+
+        String username = claims.getSubject();
+        Object rolesClaim = claims.get("roles");
+        if (username == null || !(rolesClaim instanceof List<?> roles) || roles.isEmpty()
+                || roles.stream().anyMatch(rol -> !(rol instanceof String))) {
+            onError(response, "Token sin usuario o roles válidos.", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        String rolesStr = String.join(",", roles.stream().map(String.class::cast).toList());
+        boolean admin = roles.contains("ADMIN");
+        boolean vendedor = roles.contains("VENDEDOR");
+        String path = request.getRequestURI();
+        boolean consultaPermitida = "GET".equalsIgnoreCase(request.getMethod())
+                && (path.equals("/auth/me")
+                    || coincideRuta(path, "/productos")
+                    || coincideRuta(path, "/categorias")
+                    || coincideRuta(path, "/ventas")
+                    || coincideRuta(path, "/pedidos"));
+
+        if (!admin && (!vendedor || !consultaPermitida)) {
+            onError(response, "Acceso denegado para este rol.", HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        HttpServletRequestWrapperWithHeaders mutada = new HttpServletRequestWrapperWithHeaders(request);
+        mutada.addHeader("X-User-Username", username);
+        mutada.addHeader("X-User-Roles", rolesStr);
+
+        // Los errores de los microservicios no son errores de autenticación.
+        filterChain.doFilter(mutada, response);
+    }
+
+    private boolean coincideRuta(String path, String base) {
+        return path.equals(base) || path.startsWith(base + "/");
     }
 
     private void onError(HttpServletResponse response, String err, int status) throws IOException {

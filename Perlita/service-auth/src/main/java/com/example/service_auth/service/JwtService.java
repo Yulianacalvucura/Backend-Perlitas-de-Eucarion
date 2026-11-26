@@ -16,6 +16,12 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secreto;
 
+    public String obtenerUsuario(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secreto.getBytes(StandardCharsets.UTF_8)))
+                .build().parseClaimsJws(token).getBody().getSubject();
+    }
+
     public String generarToken(String username, List<String> roles) {
         long unDiaEnMilisegundos = 1000L * 60 * 60 * 24;
         return Jwts.builder()

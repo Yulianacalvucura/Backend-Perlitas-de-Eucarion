@@ -24,6 +24,7 @@ public class SecurityConfig
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/registrar").hasAuthority("ADMIN")
+                .requestMatchers("/auth/usuarios", "/auth/usuarios/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/auth/v3/api-docs/",
                     "/api/v1/auth/v3/api-docs/**",
