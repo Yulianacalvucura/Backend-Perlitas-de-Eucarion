@@ -137,6 +137,25 @@ class VentaServiceTest {
     }
 
     @Test
+    void crearCompra_sinCuenta_calculaTotalReservaStockYQuedaPendiente() {
+        Venta venta = new Venta();
+        venta.setUsuarioNombre("cliente-invitado");
+        VentaProducto vp = new VentaProducto();
+        vp.setProductoId(10L);
+        vp.setCantidad(2);
+        venta.setProductos(List.of(vp));
+        stubObtenerProducto(10L, producto(10L, true, 5, 100.0));
+        stubDescontarStock(10L);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Venta actual = service.crearCompra(venta);
+        assertNull(actual.getClienteId());
+        assertEquals("PENDIENTE", actual.getEstado());
+        assertEquals(200.0, actual.getTotal());
+        verify(requestBodySpec).bodyValue(Map.of("ajuste", -2));
+    }
+
+    @Test
     void crearVenta_whenProductoInactivo_debeFallarSinGuardarNiDescontar() {
         Venta venta = new Venta();
         venta.setClienteId(1L);

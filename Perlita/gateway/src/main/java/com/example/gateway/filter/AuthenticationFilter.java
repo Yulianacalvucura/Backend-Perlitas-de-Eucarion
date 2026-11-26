@@ -50,7 +50,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = rutaInterna(request.getRequestURI());
 
-        if (path.startsWith("/swagger-ui") || path.contains("/v3/api-docs")) {
+        if (path.startsWith("/swagger-ui") || path.matches("/(auth|materiales|productos|ventas|categorias|pedidos|proveedores|reportes|galeria|gastos|calendario)/v3/api-docs") || path.equals("/v3/api-docs") || path.startsWith("/v3/api-docs/")) {
             return true;
         }
 
@@ -60,6 +60,18 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        String rutaPublica = request.getRequestURI();
+        boolean catalogo = "GET".equals(request.getMethod()) &&
+                (rutaPublica.equals("/api/v1/productos/tienda") || rutaPublica.equals("/api/v1/categorias/tienda"));
+        boolean compra = "POST".equals(request.getMethod()) && rutaPublica.equals("/api/v1/ventas/compra");
+        if (catalogo || compra) {
+            HttpServletRequestWrapperWithHeaders invitado = new HttpServletRequestWrapperWithHeaders(request);
+            invitado.addHeader("X-User-Username", "cliente-invitado");
+            invitado.addHeader("X-User-Roles", "CLIENTE");
+            filterChain.doFilter(invitado, response);
+            return;
+        }
 
         String authHeader = request.getHeader("Authorization");
 

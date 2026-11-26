@@ -83,6 +83,42 @@ public class VentaController {
     @Operation(summary = "Registrar una venta con datos de un cliente sin cuenta")
     @PostMapping("/registro")
     public ResponseEntity<Venta> registrar(@Valid @RequestBody RegistroVentaRequest datos, Principal principal) {
+        Venta venta = prepararVenta(datos);
+        venta.setUsuarioNombre(principal.getName());
+        return new ResponseEntity<>(service.crearVenta(venta), HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Comprar sin cuenta", description = "Registra un pedido pendiente de pago, con pago al recibir. No requiere JWT.")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @PostMapping("/compra")
+    public ResponseEntity<ConfirmacionCompra> comprar(@Valid @RequestBody RegistroVentaRequest datos) {
+        if (!"EFECTIVO".equals(datos.metodoPago())) {
+            throw new IllegalArgumentException("La compra pública utiliza pago en efectivo al recibir");
+        }
+        if (datos.items().stream().map(ItemVenta::productoId).distinct().count() != datos.items().size()) {
+            throw new IllegalArgumentException("No se permiten productos repetidos en una compra");
+        }
+        Venta venta = prepararVenta(datos);
+        venta.setUsuarioNombre("cliente-invitado");
+        Venta guardada = service.crearCompra(venta);
+        List<DetalleCompra> items = guardada.getProductos().stream().map(producto -> {
+            String nombre = "Producto #" + producto.getProductoId();
+            if (producto.getDatosProducto() instanceof Map<?, ?> datosProducto && datosProducto.get("nombre") != null) {
+                nombre = datosProducto.get("nombre").toString();
+            }
+            return new DetalleCompra(producto.getProductoId(), nombre, producto.getCantidad(),
+                    producto.getPrecioUnitario(), producto.getPrecioUnitario() * producto.getCantidad());
+        }).toList();
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ConfirmacionCompra(
+                guardada.getId(), guardada.getTotal(), guardada.getEstado(), items));
+    }
+
+    public record ConfirmacionCompra(Long id, Double total, String estado, List<DetalleCompra> items) {}
+
+    public record DetalleCompra(Long productoId, String productoNombre, Integer cantidad,
+                                Double precioUnitario, Double subtotal) {}
+
+    private Venta prepararVenta(RegistroVentaRequest datos) {
         Venta venta = new Venta();
         venta.setClienteNombre(datos.clienteNombre());
         venta.setClienteApellidos(datos.clienteApellidos());
@@ -93,15 +129,13 @@ public class VentaController {
         venta.setComunaId(datos.comunaId());
         venta.setIndicaciones(datos.indicaciones());
         venta.setMetodoPago(datos.metodoPago());
-        venta.setUsuarioNombre(principal.getName());
-        venta.setEstado("PAGADO");
         venta.setProductos(datos.items().stream().map(item -> {
             VentaProducto producto = new VentaProducto();
             producto.setProductoId(item.productoId());
             producto.setCantidad(item.cantidad());
             return producto;
         }).collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new)));
-        return new ResponseEntity<>(service.crearVenta(venta), HttpStatus.CREATED);
+        return venta;
     }
 
     @Operation(summary = "Cambiar el estado de una venta")

@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.example.ventas.model.Venta;
+import com.example.ventas.model.VentaProducto;
 import com.example.ventas.service.VentaService;
 
 import java.time.LocalDate;
@@ -95,6 +96,38 @@ class VentaControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.metodoPago").value("efectivo"));
+    }
+
+    @Test
+    void comprar_devuelveResumenSinDatosPrivados() throws Exception {
+        VentaProducto producto = new VentaProducto();
+        producto.setProductoId(1L);
+        producto.setCantidad(2);
+        producto.setPrecioUnitario(12000.0);
+        producto.setDatosProducto(Map.of("nombre", "Collar de perlas"));
+        Venta venta = new Venta();
+        venta.setId(2L);
+        venta.setTotal(24000.0);
+        venta.setEstado("PENDIENTE");
+        venta.setProductos(List.of(producto));
+        venta.setClienteCorreo("test@example.com");
+        when(service.crearCompra(any(Venta.class))).thenReturn(venta);
+
+        mockMvc.perform(post("/ventas/compra")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "clienteNombre", "Ana", "clienteApellidos", "Prueba",
+                                "clienteCorreo", "test@example.com", "calle", "Calle Uno",
+                                "numeroCasa", "123", "regionId", 1, "comunaId", 1,
+                                "metodoPago", "EFECTIVO", "items", List.of(Map.of("productoId", 1, "cantidad", 2))))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(2))
+                .andExpect(jsonPath("$.total").value(24000.0))
+                .andExpect(jsonPath("$.items[0].productoNombre").value("Collar de perlas"))
+                .andExpect(jsonPath("$.items[0].cantidad").value(2))
+                .andExpect(jsonPath("$.items[0].precioUnitario").value(12000.0))
+                .andExpect(jsonPath("$.items[0].subtotal").value(24000.0))
+                .andExpect(jsonPath("$.clienteCorreo").doesNotExist());
     }
 
     @Test

@@ -148,6 +148,36 @@ class AuthenticationFilterTest {
         assertFalse(ejecutado.get());
     }
 
+    @Test
+    void clienteInvitadoSoloRecibeIdentidadDeCliente() throws Exception {
+        for (String ruta : List.of("/api/v1/productos/tienda", "/api/v1/categorias/tienda", "/api/v1/ventas/compra")) {
+            MockHttpServletRequest solicitud = new MockHttpServletRequest(ruta.endsWith("compra") ? "POST" : "GET", ruta);
+            solicitud.addHeader("X-User-Roles", "ADMIN");
+            solicitud.addHeader("X-User-Username", "admin");
+            MockHttpServletResponse respuesta = new MockHttpServletResponse();
+            AtomicBoolean ejecutado = new AtomicBoolean(false);
+            filtro.doFilter(solicitud, respuesta, (req, res) -> {
+                HttpServletRequest filtrada = (HttpServletRequest) req;
+                assertEquals("CLIENTE", filtrada.getHeader("X-User-Roles"));
+                assertEquals("cliente-invitado", filtrada.getHeader("X-User-Username"));
+                ejecutado.set(true);
+            });
+            assertTrue(ejecutado.get());
+            assertEquals(200, respuesta.getStatus());
+        }
+    }
+
+    @Test
+    void invitadoNoPuedeConsultarVentasNiModificarProductos() throws Exception {
+        for (String ruta : List.of("/api/v1/ventas", "/api/v1/auth/usuarios", "/api/v1/productos/1/stock")) {
+            MockHttpServletRequest solicitud = new MockHttpServletRequest(ruta.endsWith("stock") ? "PATCH" : "GET", ruta);
+            solicitud.addHeader("X-User-Roles", "ADMIN");
+            MockHttpServletResponse respuesta = new MockHttpServletResponse();
+            filtro.doFilter(solicitud, respuesta, (req, res) -> { throw new AssertionError("Acceso no autorizado"); });
+            assertEquals(401, respuesta.getStatus());
+        }
+    }
+
     private String crearToken(String usuario, List<String> roles, Date expiracion) {
         Key clave = Keys.hmacShaKeyFor(SECRETO.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()

@@ -25,6 +25,18 @@ public class ProductoController {
     @Autowired
     private ProductoService service;
 
+    @Operation(summary = "Catálogo público de productos activos")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @GetMapping("/tienda")
+    public List<ProductoTienda> tienda() {
+        return service.listarActivos().stream().map(p -> new ProductoTienda(p.getId(),
+                p.getNombre(), p.getDescripcion(), p.getPrecioAntes(), p.getPrecioVenta(),
+                p.getStockDisponible())).toList();
+    }
+
+    public record ProductoTienda(Long id, String nombre, String descripcion, Double precioAntes,
+                                 Double precioVenta, Integer stockDisponible) {}
+
     @Operation(summary = "Listar todos los productos")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida correctamente"),

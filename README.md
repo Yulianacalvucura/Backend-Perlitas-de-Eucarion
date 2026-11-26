@@ -178,7 +178,7 @@ Authorization: Bearer <token>
 
 El Gateway valida el JWT, consulta el estado y rol actual de la cuenta en `service-auth` para las peticiones protegidas (salvo `/auth/me`, que valida la cuenta directamente), y aplica las restricciones de acceso. El personal se administra mediante `/api/v1/auth/usuarios`. Las contraseñas se guardan como hashes BCrypt.
 
-> La tienda pública todavía no está implementada. Se propone acceso de cliente sin cuenta, separado de los roles del personal, pendiente de implementación y de confirmar su aceptación como cumplimiento de la pauta.
+> El cliente compra sin cuenta. El Gateway asigna internamente la identidad `CLIENTE` únicamente a tres rutas públicas exactas; los endpoints administrativos siguen requiriendo JWT. Falta comprobar este flujo en ejecución y confirmar su aceptación como cumplimiento del rol cliente.
 
 ---
 
@@ -263,6 +263,8 @@ Resultados de los reportes Surefire revisados el 25-11-2026 para los seis módul
 | ventas | 25 | 0 | 0 |
 | **Total** | **136** | **0** | **0** |
 
+Estos son los resultados anteriores a la tienda pública. Se añadieron 3 pruebas (2 de Gateway y 1 de ventas); deben ejecutarse para obtener las cifras definitivas.
+
 Estos resultados corresponden a los seis módulos indicados, no a una ejecución completa de los doce módulos. Los reportes no permiten confirmar aquí el número de pruebas omitidas. Además, se verificaron manualmente login, creación de categorías, CRUD de productos, ventas, descuento y devolución de stock, acceso de vendedor y rechazo HTTP 403 de una edición de producto desde la API.
 
 ---
@@ -286,7 +288,15 @@ Reglas generales:
 - Falta de autenticación, token inválido o sesión invalidada: `401 Unauthorized`.
 - Autenticado sin permiso: `403 Forbidden`.
 - Fallos de disponibilidad de autenticación: `503 Service Unavailable`.
-- El cliente sin cuenta todavía no tiene rutas públicas de tienda.
+- El cliente sin cuenta utiliza únicamente estas operaciones públicas, sin JWT:
+
+| Método | Ruta | Uso |
+|---|---|---|
+| GET | `/api/v1/productos/tienda` | Catálogo de productos activos (sin datos internos de materiales). |
+| GET | `/api/v1/categorias/tienda` | Categorías activas asociadas a productos. |
+| POST | `/api/v1/ventas/compra` | Compra como invitado; devuelve ID, total y estado. |
+
+Las cabeceras de identidad que envíe un visitante son reemplazadas por el Gateway. Los servicios internos permanecen en loopback; el rol CLIENTE no permite modificar productos directamente a través del Gateway.
 
 ---
 
@@ -312,12 +322,12 @@ Los microservicios internos se configuraron para escuchar en loopback. Sus cabec
 
 ## Reglas de negocio
 
-El sistema administrativo está integrado con React y utiliza persistencia real. El registro de ventas admite clientes sin cuenta a través del administrador; no es todavía una compra pública ni integra una pasarela de pago.
+El sistema administrativo está integrado con React y utiliza persistencia real. La tienda pública registra compras sin cuenta, con pago en efectivo al recibir y estado `PENDIENTE`. El backend calcula el total y reserva el stock mediante los ajustes existentes; el ADMIN puede confirmar el pago o anular y devolver las unidades. No se integra una pasarela de pago.
 
 Las tareas pendientes para cerrar la Evaluación 3 son:
 
-- Incorporar el acceso público a la tienda y compra como invitado, sujeto a confirmar el alcance del rol cliente con el docente.
-- Validar la edición, baja de cuentas y rechazo de sesiones previamente emitidas; ampliar las pruebas de integración a la tienda cuando esté implementada.
+- Validar en ejecución la tienda pública y compra como invitado, sujeto a confirmar el alcance del rol cliente con el docente.
+- Validar la edición, baja de cuentas y rechazo de sesiones previamente emitidas; ejecutar las nuevas pruebas de tienda y actualizar los resultados de testing.
 - Completar ERS, manual de usuario y documentación de APIs e integración.
 
 ---

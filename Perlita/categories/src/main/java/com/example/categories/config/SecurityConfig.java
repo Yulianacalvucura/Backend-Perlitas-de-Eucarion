@@ -19,6 +19,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/categorias/tienda").hasAnyAuthority("ADMIN", "VENDEDOR", "CLIENTE")
                 .requestMatchers(HttpMethod.GET, "/categorias/**").hasAnyAuthority("ADMIN", "VENDEDOR")
                 .requestMatchers(HttpMethod.PUT, "/categorias/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/categorias/**").hasAuthority("ADMIN")

@@ -63,6 +63,15 @@ public class VentaService {
 
     @Transactional
     public Venta crearVenta(Venta venta) {
+        return guardarVenta(venta, "PAGADO");
+    }
+
+    @Transactional
+    public Venta crearCompra(Venta venta) {
+        return guardarVenta(venta, "PENDIENTE");
+    }
+
+    private Venta guardarVenta(Venta venta, String estadoInicial) {
         validarPedido(venta.getPedidoId());
 
         List<VentaProducto> productos = venta.getProductos();
@@ -74,7 +83,7 @@ public class VentaService {
             }
         }
 
-        venta.setEstado("PAGADO");
+        venta.setEstado(estadoInicial);
         venta.setFecha(LocalDate.now());
         venta.setTotal(total);
 
@@ -85,12 +94,12 @@ public class VentaService {
             descontarStock(productos);
         }
 
-        return enriquecerConProductos(guardada);
+        return "PENDIENTE".equals(estadoInicial) ? guardada : enriquecerConProductos(guardada);
     }
 
     @Transactional
     public Venta cambiarEstado(Long id, String estado) {
-        if (estado == null || !Set.of("PAGADO", "EN_PREPARACION", "ENTREGADO", "CANCELADO").contains(estado)) {
+        if (estado == null || !Set.of("PENDIENTE", "PAGADO", "EN_PREPARACION", "ENTREGADO", "CANCELADO").contains(estado)) {
             throw new IllegalArgumentException("Estado de venta inválido");
         }
         Venta venta = ventaRepository.buscarParaActualizar(id)
@@ -192,6 +201,7 @@ public class VentaService {
             throw new IllegalArgumentException("El producto " + productoId + " no tiene precio de venta");
         }
         vp.setPrecioUnitario(precio.doubleValue());
+        vp.setDatosProducto(producto);
     }
 
     private Object obtenerProducto(Long productoId) {

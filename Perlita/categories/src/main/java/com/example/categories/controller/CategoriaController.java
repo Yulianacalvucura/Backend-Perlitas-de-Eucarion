@@ -24,6 +24,18 @@ public class CategoriaController {
     @Autowired
     private CategoriaService service;
 
+    @Operation(summary = "Categorías activas del catálogo público")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @GetMapping("/tienda")
+    public List<CategoriaTienda> tienda() {
+        return service.listarRelaciones().stream()
+                .filter(r -> r.getCategoria() != null && Integer.valueOf(1).equals(r.getCategoria().getActivo()))
+                .map(r -> new CategoriaTienda(r.getProductoId(), r.getCategoria().getId(),
+                        r.getCategoria().getNombre())).toList();
+    }
+
+    public record CategoriaTienda(Long productoId, Long categoriaId, String nombre) {}
+
     @Operation(summary = "Listar todas las categorías")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de categorías obtenida correctamente"),

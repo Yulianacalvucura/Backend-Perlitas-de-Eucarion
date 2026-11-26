@@ -52,7 +52,7 @@ public class ProductoService {
             throw new IllegalArgumentException("El ajuste de stock es obligatorio");
         }
 
-        Producto producto = productoRepository.findById(id)
+        Producto producto = productoRepository.buscarParaAjustar(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
 
         int stockActual = producto.getStockDisponible() != null ? producto.getStockDisponible() : 0;

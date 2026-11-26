@@ -125,7 +125,7 @@ class ProductoServiceTest {
         Producto producto = new Producto();
         producto.setId(1L);
         producto.setStockDisponible(10);
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+        when(productoRepository.buscarParaAjustar(1L)).thenReturn(Optional.of(producto));
         when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Producto actual = service.ajustarStock(1L, -3);
@@ -139,7 +139,7 @@ class ProductoServiceTest {
         Producto producto = new Producto();
         producto.setId(1L);
         producto.setStockDisponible(2);
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+        when(productoRepository.buscarParaAjustar(1L)).thenReturn(Optional.of(producto));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.ajustarStock(1L, -3));
@@ -151,7 +151,7 @@ class ProductoServiceTest {
 
     @Test
     void ajustarStock_cuandoProductoNoExiste_debeLanzarExcepcion() {
-        when(productoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(productoRepository.buscarParaAjustar(99L)).thenReturn(Optional.empty());
 
         assertThrows(com.example.productos.exception.ResourceNotFoundException.class,
                 () -> service.ajustarStock(99L, -1));
