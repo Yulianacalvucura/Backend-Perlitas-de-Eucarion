@@ -19,9 +19,20 @@ public class Venta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "El ID del cliente es obligatorio")
-    @Column(name = "cliente_id", nullable = false)
+    @Column(name = "cliente_id")
     private Long clienteId;
+
+    private String clienteNombre;
+    private String clienteApellidos;
+    private String clienteCorreo;
+    private String calle;
+    private String numeroCasa;
+    private Integer regionId;
+    private Integer comunaId;
+    @Column(length = 1000)
+    private String indicaciones;
+    private String usuarioNombre;
+    private String estado;
 
     @Column(name = "pedido_id")
     private Long pedidoId;

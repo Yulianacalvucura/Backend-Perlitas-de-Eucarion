@@ -2,6 +2,9 @@ package com.example.ventas.controller;
 
 import com.example.ventas.exception.ResourceNotFoundException;
 import com.example.ventas.model.Venta;
+import com.example.ventas.model.VentaProducto;
+import jakarta.validation.constraints.*;
+import java.security.Principal;
 import com.example.ventas.service.VentaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -71,8 +74,63 @@ public class VentaController {
     })
     @PostMapping
     public ResponseEntity<Venta> crear(@Valid @RequestBody Venta venta) {
+        if (venta.getClienteId() == null) {
+            throw new IllegalArgumentException("El ID del cliente es obligatorio para este endpoint");
+        }
         return new ResponseEntity<>(service.crearVenta(venta), HttpStatus.CREATED);
     }
+
+    @Operation(summary = "Registrar una venta con datos de un cliente sin cuenta")
+    @PostMapping("/registro")
+    public ResponseEntity<Venta> registrar(@Valid @RequestBody RegistroVentaRequest datos, Principal principal) {
+        Venta venta = new Venta();
+        venta.setClienteNombre(datos.clienteNombre());
+        venta.setClienteApellidos(datos.clienteApellidos());
+        venta.setClienteCorreo(datos.clienteCorreo());
+        venta.setCalle(datos.calle());
+        venta.setNumeroCasa(datos.numeroCasa());
+        venta.setRegionId(datos.regionId());
+        venta.setComunaId(datos.comunaId());
+        venta.setIndicaciones(datos.indicaciones());
+        venta.setMetodoPago(datos.metodoPago());
+        venta.setUsuarioNombre(principal.getName());
+        venta.setEstado("PAGADO");
+        venta.setProductos(datos.items().stream().map(item -> {
+            VentaProducto producto = new VentaProducto();
+            producto.setProductoId(item.productoId());
+            producto.setCantidad(item.cantidad());
+            return producto;
+        }).collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new)));
+        return new ResponseEntity<>(service.crearVenta(venta), HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Cambiar el estado de una venta")
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Venta> cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> datos) {
+        return ResponseEntity.ok(service.cambiarEstado(id, datos.get("estado")));
+    }
+
+    @Operation(summary = "Anular una venta y devolver el stock")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> anular(@PathVariable Long id) {
+        service.cambiarEstado(id, "CANCELADO");
+        return ResponseEntity.noContent().build();
+    }
+
+    public record RegistroVentaRequest(
+            @NotBlank @Size(max = 255) String clienteNombre,
+            @NotBlank @Size(max = 255) String clienteApellidos,
+            @NotBlank @Email @Size(max = 255) String clienteCorreo,
+            @NotBlank @Size(max = 255) String calle,
+            @NotBlank @Size(max = 255) String numeroCasa,
+            @NotNull @Positive Integer regionId,
+            @NotNull @Positive Integer comunaId,
+            @Size(max = 1000) String indicaciones,
+            @NotBlank @Pattern(regexp = "EFECTIVO|TARJETA|TRANSFERENCIA") String metodoPago,
+            @NotEmpty List<@NotNull @Valid ItemVenta> items) {}
+
+    public record ItemVenta(@NotNull @Positive Long productoId,
+                            @NotNull @Positive Integer cantidad) {}
 
     @Operation(summary = "Resumen de ventas por método de pago")
     @ApiResponses(value = {

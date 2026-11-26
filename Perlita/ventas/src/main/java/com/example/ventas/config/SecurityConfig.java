@@ -20,8 +20,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/ventas/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.POST, "/ventas/**").hasAnyAuthority("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.PUT, "/ventas/**").hasAnyAuthority("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/ventas/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/ventas/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/ventas/**").hasAuthority("ADMIN")
                 .requestMatchers(
                     "/api/v1/ventas/v3/api-docs/",

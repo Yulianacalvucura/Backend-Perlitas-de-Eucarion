@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class VentaService {
@@ -71,6 +74,7 @@ public class VentaService {
             }
         }
 
+        venta.setEstado("PAGADO");
         venta.setFecha(LocalDate.now());
         venta.setTotal(total);
 
@@ -82,6 +86,57 @@ public class VentaService {
         }
 
         return enriquecerConProductos(guardada);
+    }
+
+    @Transactional
+    public Venta cambiarEstado(Long id, String estado) {
+        if (estado == null || !Set.of("PAGADO", "EN_PREPARACION", "ENTREGADO", "CANCELADO").contains(estado)) {
+            throw new IllegalArgumentException("Estado de venta inválido");
+        }
+        Venta venta = ventaRepository.buscarParaActualizar(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con id: " + id));
+
+        if ("CANCELADO".equals(venta.getEstado())) {
+            if ("CANCELADO".equals(estado)) return venta;
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Una venta anulada no puede reactivarse");
+        }
+
+        if ("CANCELADO".equals(estado)) {
+            devolverStock(venta.getProductos());
+        }
+        venta.setEstado(estado);
+        return ventaRepository.save(venta);
+    }
+
+    private void devolverStock(List<VentaProducto> productos) {
+        if (productos == null) return;
+        List<VentaProducto> devueltos = new ArrayList<>();
+        try {
+            for (VentaProducto vp : productos) {
+                productosWebClient.patch()
+                        .uri("/productos/{id}/stock", vp.getProductoId())
+                        .bodyValue(Map.of("ajuste", vp.getCantidad()))
+                        .retrieve()
+                        .bodyToMono(Void.class)
+                        .block();
+                devueltos.add(vp);
+            }
+        } catch (WebClientResponseException | WebClientRequestException e) {
+            // Compensar los ajustes confirmados si falla una reposición posterior.
+            for (VentaProducto vp : devueltos) {
+                try {
+                    productosWebClient.patch()
+                            .uri("/productos/{id}/stock", vp.getProductoId())
+                            .bodyValue(Map.of("ajuste", -vp.getCantidad()))
+                            .retrieve()
+                            .bodyToMono(Void.class)
+                            .block();
+                } catch (RuntimeException ex) {
+                    log.error("No se pudo compensar la reposición del producto {}", vp.getProductoId(), ex);
+                }
+            }
+            throw new ServicioNoDisponibleException("No se pudo devolver el stock de la venta", e);
+        }
     }
 
     public Venta obtenerVentaCompleta(Long id) {
