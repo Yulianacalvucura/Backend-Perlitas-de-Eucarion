@@ -24,14 +24,14 @@ public class OpenApiConfig {
                         .version("1.0")
                         .description("Registro y login de usuarios, generación de tokens JWT"))
                 .servers(List.of(
-                        new Server().url("http://localhost:9090").description("Gateway")
+                        new Server().url("/api/v1").description("Gateway – API v1")
                 ))
                 .components(new Components().addSecuritySchemes(BEARER_JWT,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Token JWT obtenido en POST /auth/login")))
+                                .description("Token JWT obtenido en POST /api/v1/auth/login")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_JWT));
     }
 }

@@ -17,6 +17,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 @Component
 @Order(1)
@@ -24,6 +29,22 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${jwt.secret}")
     private String secreto;
+
+    @Value("${auth.service.url:http://localhost:8091}")
+    private String authUrl;
+
+    @SuppressWarnings("unchecked")
+    protected Map<String, Object> consultarPerfil(String authHeader, String username, String roles) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2000);
+        factory.setReadTimeout(3000);
+        return RestClient.builder().requestFactory(factory).build().get()
+                .uri(authUrl + "/auth/me")
+                .header("Authorization", authHeader)
+                .header("X-User-Username", username)
+                .header("X-User-Roles", roles)
+                .retrieve().body(Map.class);
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -70,9 +91,29 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         }
 
         String rolesStr = String.join(",", roles.stream().map(String.class::cast).toList());
-        boolean admin = roles.contains("ADMIN");
-        boolean vendedor = roles.contains("VENDEDOR");
         String path = rutaInterna(request.getRequestURI());
+        String rolToken = roles.contains("ADMIN") ? "ADMIN" : roles.contains("VENDEDOR") ? "VENDEDOR" : "";
+        if (!path.equals("/auth/me")) {
+            try {
+                Map<String, Object> perfil = consultarPerfil(authHeader, username, rolesStr);
+                if (perfil == null || !Boolean.TRUE.equals(perfil.get("activo")) || !rolToken.equals(perfil.get("rol"))) {
+                    onError(response, "La cuenta o su rol cambió. Inicie sesión nuevamente.", 401);
+                    return;
+                }
+            } catch (RestClientResponseException e) {
+                if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                    onError(response, "La sesión ya no es válida.", 401);
+                } else {
+                    onError(response, "Servicio de autenticación no disponible.", 503);
+                }
+                return;
+            } catch (RestClientException e) {
+                onError(response, "Servicio de autenticación no disponible.", 503);
+                return;
+            }
+        }
+        boolean admin = rolToken.equals("ADMIN");
+        boolean vendedor = rolToken.equals("VENDEDOR");
         boolean consultaPermitida = "GET".equalsIgnoreCase(request.getMethod())
                 && (path.equals("/auth/me")
                     || coincideRuta(path, "/productos")
@@ -105,7 +146,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
 
-        String httpError = (status == 401) ? "Unauthorized" : "Forbidden";
+        String httpError = status == 401 ? "Unauthorized" : status == 403 ? "Forbidden" : "Service Unavailable";
         String jsonResponse = String.format(
             "{\"timestamp\": \"%s\", \"status\": %d, \"error\": \"%s\", \"mensaje\": \"%s\"}",
             LocalDateTime.now(),

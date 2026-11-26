@@ -16,6 +16,9 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,7 +35,8 @@ class AuthenticationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filtro = new AuthenticationFilter();
+        filtro = spy(new AuthenticationFilter());
+        doReturn(Map.of("activo", true, "rol", "ADMIN")).when(filtro).consultarPerfil(anyString(), anyString(), anyString());
         ReflectionTestUtils.setField(filtro, "secreto", SECRETO);
     }
 
@@ -118,6 +122,30 @@ class AuthenticationFilterTest {
         assertEquals("ADMIN,VENDEDOR", filtrada.getHeader("X-User-Roles"));
         assertEquals(1, Collections.list(filtrada.getHeaders("X-User-Roles")).size());
         assertEquals("intruso", solicitud.getHeader("X-User-Username"));
+    }
+
+    @Test
+    void vendedorNoPuedeModificarProductoVersionado() throws Exception {
+        doReturn(Map.of("activo", true, "rol", "VENDEDOR")).when(filtro).consultarPerfil(anyString(), anyString(), anyString());
+        MockHttpServletRequest solicitud = new MockHttpServletRequest("PUT", "/api/v1/productos/1");
+        solicitud.addHeader("Authorization", "Bearer " + crearToken("vendedor", List.of("VENDEDOR"), Date.from(Instant.now().plusSeconds(300))));
+        MockHttpServletResponse respuesta = new MockHttpServletResponse();
+        AtomicBoolean ejecutado = new AtomicBoolean(false);
+        filtro.doFilter(solicitud, respuesta, (req, res) -> ejecutado.set(true));
+        assertEquals(403, respuesta.getStatus());
+        assertFalse(ejecutado.get());
+    }
+
+    @Test
+    void tokenDeUsuarioDesactivadoNoPermiteConsultar() throws Exception {
+        doReturn(Map.of("activo", false, "rol", "ADMIN")).when(filtro).consultarPerfil(anyString(), anyString(), anyString());
+        MockHttpServletRequest solicitud = new MockHttpServletRequest("GET", "/api/v1/productos");
+        solicitud.addHeader("Authorization", "Bearer " + crearToken("admin", List.of("ADMIN"), Date.from(Instant.now().plusSeconds(300))));
+        MockHttpServletResponse respuesta = new MockHttpServletResponse();
+        AtomicBoolean ejecutado = new AtomicBoolean(false);
+        filtro.doFilter(solicitud, respuesta, (req, res) -> ejecutado.set(true));
+        assertEquals(401, respuesta.getStatus());
+        assertFalse(ejecutado.get());
     }
 
     private String crearToken(String usuario, List<String> roles, Date expiracion) {

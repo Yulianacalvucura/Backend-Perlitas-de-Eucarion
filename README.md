@@ -3,7 +3,8 @@
 Backend del sistema **Perlitas de Eucarión**, una aplicación orientada a la gestión de una pyme de bisutería artesanal. El proyecto administra productos, materiales, ventas, pedidos, categorías, proveedores, gastos, producción, galería, reportes y autenticación de usuarios.
 
 El backend está desarrollado con **Java 21 y Spring Boot**, siguiendo una arquitectura de microservicios y utilizando
-un **API Gateway**
+un **API Gateway**. La gestión interna está integrada con el frontend React mediante REST.
+
 ---
 
 ## Integrantes
@@ -29,7 +30,7 @@ un **API Gateway**
 - Spring Security
 - JWT
 - Spring Cloud Gateway MVC
-- MySQL
+- MySQL / MariaDB (XAMPP en desarrollo local)
 - Maven
 - Swagger / OpenAPI
 - JUnit 5 y Mockito
@@ -68,7 +69,7 @@ El **Gateway** centraliza el acceso a los servicios y trabaja junto al servicio 
 
 ## Base de datos
 
-Actualmente los microservicios están configurados para trabajar con **MySQL local**.
+Actualmente los microservicios están configurados para trabajar con **MySQL/MariaDB local** (puerto 3306; probado con MariaDB 10.4.32 de XAMPP).
 
 Las bases de datos se crean automáticamente mediante:
 
@@ -79,7 +80,15 @@ spring.jpa.hibernate.ddl-auto=update
 
 El repositorio también incluye scripts SQL de apoyo para creación, respaldo y datos de prueba.
 
-> Para la Evaluación 3 se encuentra pendiente completar la conexión de la base de datos a un servicio en la nube.
+> La integración se ha probado en desarrollo local. La pauta no exige desplegar la aplicación en la nube.
+
+Si se reutiliza una base de datos creada antes de la integración de ventas sin cuenta, ejecutar una sola vez:
+
+```sql
+ALTER TABLE db_ventas.ventas MODIFY COLUMN cliente_id BIGINT NULL;
+```
+
+En una base nueva, Hibernate crea las tablas según las entidades actuales.
 
 ---
 
@@ -100,7 +109,15 @@ cd Backend-Perlitas-de-Eucarion
 
 ### 3. Ejecutar los servicios
 
-Desde cada carpeta se puede ejecutar:
+En Windows, iniciar MySQL desde XAMPP y ejecutar desde la raíz del backend:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\iniciar.ps1
+```
+
+El script inicia `service-auth`, `productos`, `categories`, `ventas`, `pedidos` y `gateway`. Para iniciar los doce módulos, añadir `-Todos`. La opción `-Reiniciar` reinicia procesos Java del proyecto cuando puede identificarlos; si un puerto está ocupado por otro proceso, cerrar manualmente la terminal correspondiente.
+
+También se puede iniciar cada servicio desde su carpeta:
 
 ```bash
 ./mvnw spring-boot:run
@@ -108,22 +125,24 @@ Desde cada carpeta se puede ejecutar:
 
 En Windows:
 
-```bash
-mvnw.cmd spring-boot:run
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
 Ejemplo:
 
-```bash
+```powershell
 cd Perlita/productos
-mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
 El Gateway debe quedar disponible en:
 
 ```text
-http://localhost:9090
+http://localhost:9090/api/v1
 ```
+
+Para ejecutar el frontend, copiar `.env.example` a `.env` en su repositorio, usar `VITE_API_URL=/api/v1`, ejecutar `npm install` y `npm run dev`. El proxy de Vite reenvía las peticiones al Gateway. No iniciar el mock-server para la integración real.
 
 ---
 
@@ -139,7 +158,7 @@ Actualmente se encuentran implementados los roles:
 El login se realiza mediante:
 
 ```http
-POST http://localhost:9090/auth/login
+POST http://localhost:9090/api/v1/auth/login
 ```
 
 Ejemplo de cuerpo:
@@ -151,13 +170,15 @@ Ejemplo de cuerpo:
 }
 ```
 
-Las solicitudes protegidas utilizan el token recibido en el encabezado:
+La respuesta del login es un JWT en texto plano. El token tiene una vigencia de 24 horas; al expirar se debe iniciar sesión nuevamente (no hay refresh token). Las solicitudes protegidas utilizan el token recibido en el encabezado:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-> El rol `CLIENTE`, requerido para completar el flujo definido en la Evaluación 3, se encuentra pendiente de integración.
+El Gateway valida el JWT, consulta el estado y rol actual de la cuenta en `service-auth` para las peticiones protegidas (salvo `/auth/me`, que valida la cuenta directamente), y aplica las restricciones de acceso. El personal se administra mediante `/api/v1/auth/usuarios`. Las contraseñas se guardan como hashes BCrypt.
+
+> La tienda pública todavía no está implementada. Se propone acceso de cliente sin cuenta, separado de los roles del personal, pendiente de implementación y de confirmar su aceptación como cumplimiento de la pauta.
 
 ---
 
@@ -180,7 +201,7 @@ Los documentos OpenAPI se exponen mediante rutas del tipo:
 /api/v1/auth/v3/api-docs
 ```
 
-Actualmente el versionado `/api/v1` está aplicado a la documentación OpenAPI y a parte del sistema; queda pendiente uniformar el versionado de las rutas funcionales para cumplir completamente con la Evaluación 3.
+El Gateway expone las rutas funcionales bajo `/api/v1` y elimina ese prefijo al dirigir las peticiones a los controladores internos que lo requieren. Se mantienen rutas anteriores por compatibilidad. Swagger utiliza `/api/v1` como servidor base de los módulos actualizados. Para consultar la documentación de todos los microservicios, deben estar iniciados. Se comprobó el acceso a Swagger de Auth y el login y consulta de productos con rutas versionadas.
 
 ---
 
@@ -189,10 +210,12 @@ Actualmente el versionado `/api/v1` está aplicado a la documentación OpenAPI y
 El backend cuenta actualmente con servicios para:
 
 - Autenticación de usuarios mediante JWT.
-- Gestión de productos.
+- CRUD de productos, precios anterior y actual, stock y asociación con categorías.
 - Gestión de materiales.
 - Gestión de categorías.
-- Gestión de ventas.
+- Registro de ventas por el administrador con datos de clientes sin cuenta, cálculo de total y descuento de stock en el servidor.
+- Consulta de órdenes, actualización de estados, anulación y devolución de stock.
+- Gestión de usuarios del personal (alta, consulta, edición y baja lógica).
 - Gestión de pedidos.
 - Gestión de proveedores.
 - Gestión de gastos.
@@ -222,60 +245,80 @@ Entre los módulos con pruebas se encuentran:
 
 También existen pruebas básicas de carga del contexto en `reportes`, `service_calendario` y `gateway`.
 
-Para ejecutar las pruebas de un servicio:
+Para ejecutar las pruebas de un servicio, desde su carpeta:
 
-Matriz de autorizaci?n. **Criterio ?nico**: la fuente de verdad es el `SecurityConfig` de cada microservicio; el gateway valida JWT y no contradice la matriz (no aplica reglas de rol por recurso, salvo autenticaci?n/login p?blico).
+```powershell
+.\mvnw.cmd test
+```
 
-| Recurso | ADMIN | VENDEDOR |
+Resultados de los reportes Surefire revisados el 25-11-2026 para los seis módulos principales:
+
+| Servicio | Pruebas registradas | Fallos | Errores |
+|---|---:|---:|---:|
+| categories | 25 | 0 | 0 |
+| gateway | 8 | 0 | 0 |
+| pedidos | 35 | 0 | 0 |
+| productos | 27 | 0 | 0 |
+| service-auth | 16 | 0 | 0 |
+| ventas | 25 | 0 | 0 |
+| **Total** | **136** | **0** | **0** |
+
+Estos resultados corresponden a los seis módulos indicados, no a una ejecución completa de los doce módulos. Los reportes no permiten confirmar aquí el número de pruebas omitidas. Además, se verificaron manualmente login, creación de categorías, CRUD de productos, ventas, descuento y devolución de stock, acceso de vendedor y rechazo HTTP 403 de una edición de producto desde la API.
+
+---
+
+## Matriz de autorización
+
+El Gateway controla el acceso externo y los microservicios aplican sus configuraciones de Spring Security. La siguiente tabla resume el alcance de gestión interna expuesto por el Gateway.
+
+| Recurso / acción | ADMIN | VENDEDOR |
 |---|---|---|
-| Ventas (`/ventas`), pedidos (`/pedidos`), pedido-materiales (`/pedido-materiales`) | Todo (GET, POST, PUT, PATCH, DELETE) | GET, POST, PUT |
-| Producci?n (`/api/v1/produccion/**`) | Todo | GET, POST, PUT, PATCH (incluye cambio de estado) |
-| Bloqueos (`/api/v1/produccion/bloqueos/**`) | Todo | Solo GET |
-| Productos (`/productos`), materiales (`/materiales`), categor?as (`/categorias`), galer?a (`/galeria`) | Todo | GET, PUT |
-| Proveedores (`/proveedores`), proveedor-materiales (`/proveedor-materiales`), gastos (`/gastos`), categor?as-gasto (`/categorias-gasto`), reportes (`/reportes`) | Todo | Sin acceso |
-| Auth (`/auth/registrar`, gesti?n de usuarios) | Solo ADMIN | Sin acceso |
-| Login (`POST /auth/login`) | P?blico | P?blico |
+| Productos (`/api/v1/productos`) | CRUD | Solo GET |
+| Categorías (`/api/v1/categorias`) | CRUD y relaciones | Solo GET (apoyo al catálogo) |
+| Ventas (`/api/v1/ventas`) y pedidos (`/api/v1/pedidos`) | Gestión | Solo GET |
+| Usuarios (`/api/v1/auth/usuarios`) | Alta, consulta, edición, baja lógica | Sin acceso |
+| Perfil propio (`GET /api/v1/auth/me`) | Sí | Sí |
+| Otros módulos de gestión | Según operaciones disponibles | Sin acceso a través del Gateway |
+| Login (`POST /api/v1/auth/login`) | Público | Público |
 
 Reglas generales:
-- `DELETE`: siempre solo `ADMIN`.
-- Falta autenticaci?n/token inv?lido: `401 Unauthorized` (formato JSON del proyecto).
-- Autenticado sin permiso: `403 Forbidden` (`CustomAccessDeniedHandler`).
-- No existe el rol `CLIENTE`.
+- La escritura administrativa no está disponible para el vendedor.
+- Falta de autenticación, token inválido o sesión invalidada: `401 Unauthorized`.
+- Autenticado sin permiso: `403 Forbidden`.
+- Fallos de disponibilidad de autenticación: `503 Service Unavailable`.
+- El cliente sin cuenta todavía no tiene rutas públicas de tienda.
 
 ---
 
 ## Variables de entorno (seguridad)
 
-Los secretos y credenciales se externalizan con variables de entorno. Los valores por defecto son **solo para desarrollo**; en cualquier entorno compartido/producci?n deben definirse expl?citamente.
+Los valores por defecto son solo para desarrollo. En un entorno compartido deben definirse credenciales y secretos propios.
 
 | Variable | Uso | Valor por defecto (dev) |
 |---|---|---|
-| `JWT_SECRET` | Secreto HMAC para firmar/validar JWT (gateway y service-auth) | secreto de desarrollo incluido en config |
-| `DB_USER` | Usuario de base de datos MySQL | `root` |
-| `DB_PASSWORD` | Contrase?a de base de datos MySQL | vac?o |
+| `JWT_SECRET` | Secreto HMAC compartido por Gateway y service-auth | Secreto de desarrollo incluido en configuración |
+| `DB_USER` | Usuario de base de datos | `root` |
+| `DB_PASSWORD` | Contraseña de base de datos | Vacía |
 
-Aplica en todos los `application.properties`/`application.yml` de los microservicios.
+Los microservicios internos se configuraron para escuchar en loopback. Sus cabeceras de identidad internas no deben exponerse a clientes externos; esta configuración es para desarrollo local, no para un despliegue público.
 
-## Comunicaci?n entre microservicios
+## Comunicación entre microservicios
 
-- Las llamadas WebClient inter-servicio propagan `X-User-Username` y `X-User-Roles` desde la petici?n entrante (`RequestContextHolder`) mediante `ExchangeFilterFunction`.
-- Se distingue `404` (recurso no existe) de errores `5xx`/red: estos ?ltimos lanzan `ServicioNoDisponibleException` y responden `503 Servicio no disponible`.
-- Un microservicio llamado directamente, sin pasar por gateway y sin headers de identidad, responde `401 Unauthorized`.
+- El Gateway recibe las solicitudes REST versionadas, valida la identidad y propaga `X-User-Username` y `X-User-Roles`.
+- WebClient utiliza estas cabeceras en llamadas entre servicios.
+- Ventas consulta productos para obtener los precios y validar existencias. Ajusta el stock en el servicio de productos; al anular, devuelve las unidades y evita una segunda devolución de la misma venta.
+- Se distingue un recurso inexistente (`404`) de fallos de red o disponibilidad (`503`, cuando se gestionan mediante `ServicioNoDisponibleException`).
+- La compensación de ajustes de stock entre servicios no equivale a una transacción distribuida completa.
 
 ## Reglas de negocio
 
-Actualmente se encuentra implementada gran parte de la estructura del backend: microservicios, persistencia MySQL, Gateway, autenticación JWT, Swagger, lógica de negocio y pruebas en distintos servicios.
+El sistema administrativo está integrado con React y utiliza persistencia real. El registro de ventas admite clientes sin cuenta a través del administrador; no es todavía una compra pública ni integra una pasarela de pago.
 
-Las tareas principales pendientes para completar la Evaluación 3 son:
+Las tareas pendientes para cerrar la Evaluación 3 son:
 
-- Integrar el frontend React con los endpoints del backend.
-- Reemplazar la persistencia simulada/local del frontend por comunicación REST.
-- Completar el rol `CLIENTE` y ajustar los permisos de los tres roles requeridos: `ADMIN`, `VENDEDOR` y `CLIENTE`.
-- Uniformar el versionado de las APIs bajo `/api/v1`.
-- Configurar la base de datos para su uso en la nube.
-- Realizar pruebas de integración frontend ↔ backend.
-- Completar la documentación de APIs e integración.
-- Actualizar el ERS y preparar el manual de usuario.
+- Incorporar el acceso público a la tienda y compra como invitado, sujeto a confirmar el alcance del rol cliente con el docente.
+- Validar la edición, baja de cuentas y rechazo de sesiones previamente emitidas; ampliar las pruebas de integración a la tienda cuando esté implementada.
+- Completar ERS, manual de usuario y documentación de APIs e integración.
 
 ---
 
@@ -314,6 +357,8 @@ Backend-Perlitas-de-Eucarion/
 ├── perlitas_oracle.sql
 ├── db_initialization.sql
 ├── datos_prueba_perlita.sql
+├── iniciar.ps1
+├── INTEGRACION_LOCAL.md
 └── README.md
 ```
 
